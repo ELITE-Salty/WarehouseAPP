@@ -284,12 +284,142 @@
     </mat-tab>
 
     <mat-tab label="Dokumenti">
-      <section class="tab-card">
-        <h2>Nastavitve dokumentov</h2>
-        <p>
-          Tukaj bomo dodali logo, nogo dokumenta, pogoje, privzeti jezik,
-          valuto in samodejno pošiljanje CMR/Dobavnice.
-        </p>
+      <section class="tab-card documents-tab-card">
+        <div class="tab-card-header">
+          <div>
+            <h2>Dokumenti</h2>
+            <p class="muted">
+              Pregled datotek v shrambi za to podjetje.
+            </p>
+          </div>
+
+          <button class="secondary-button" type="button" (click)="loadDocuments()">
+            Osveži dokumente
+          </button>
+        </div>
+
+        @if (documentsErrorMessage()) {
+          <div class="modal-alert">
+            {{ documentsErrorMessage() }}
+          </div>
+        }
+
+        <div class="documents-layout">
+          <aside class="documents-tree-card">
+            <div class="documents-tree-header">
+              <strong>Datoteke</strong>
+
+              @if (documentsLoading()) {
+                <span>Nalaganje ...</span>
+              } @else {
+                <span>{{ storageFileCount() }} datotek</span>
+              }
+            </div>
+
+            @if (documentTreeDataSource.data.length > 0) {
+              <mat-tree
+                [dataSource]="documentTreeDataSource"
+                [treeControl]="documentTreeControl"
+                class="documents-tree"
+              >
+                <mat-tree-node
+                  *matTreeNodeDef="let node"
+                  matTreeNodePadding
+                  class="document-tree-node"
+                  [class.selected]="selectedDocument()?.key === node.key"
+                  (click)="selectDocument(node)"
+                >
+                  <button mat-icon-button disabled></button>
+
+                  <mat-icon>{{ fileIcon(node) }}</mat-icon>
+                  <span>{{ node.name }}</span>
+                </mat-tree-node>
+
+                <mat-tree-node
+                  *matTreeNodeDef="let node; when: hasDocumentChild"
+                  matTreeNodePadding
+                  class="document-tree-node folder-node"
+                >
+                  <button
+                    mat-icon-button
+                    type="button"
+                    [attr.aria-label]="'Toggle ' + node.name"
+                    (click)="toggleDocumentFolder(node)"
+                  >
+                    <mat-icon>
+                      {{ documentTreeControl.isExpanded(node) ? 'expand_more' : 'chevron_right' }}
+                    </mat-icon>
+                  </button>
+
+                  <mat-icon>{{ fileIcon(node) }}</mat-icon>
+                  <span (click)="toggleDocumentFolder(node)">{{ node.name }}</span>
+                </mat-tree-node>
+              </mat-tree>
+            } @else {
+              <div class="empty-state">
+                Ni datotek za prikaz.
+              </div>
+            }
+          </aside>
+
+          <section class="document-preview-card">
+            @if (selectedDocument()) {
+              <header class="preview-header">
+                <div>
+                  <span>Izbrana datoteka</span>
+                  <h3>{{ selectedDocument()?.name }}</h3>
+                </div>
+
+                <div class="preview-actions">
+                  <button class="secondary-button" type="button" (click)="copySelectedDocumentKey()">
+                    Kopiraj ključ
+                  </button>
+
+                  <button class="primary-button" type="button" (click)="openSelectedDocument()">
+                    Odpri
+                  </button>
+                </div>
+              </header>
+
+              <dl class="document-meta">
+                <div>
+                  <dt>Velikost</dt>
+                  <dd>{{ formatFileSize(selectedDocument()?.size) }}</dd>
+                </div>
+
+                <div>
+                  <dt>Spremenjeno</dt>
+                  <dd>{{ formatDate(selectedDocument()?.lastModified) }}</dd>
+                </div>
+
+                <div class="full-width">
+                  <dt>Ključ</dt>
+                  <dd>{{ selectedDocument()?.key }}</dd>
+                </div>
+              </dl>
+
+              <div class="preview-box">
+                @if (selectedDocumentPreviewType() === 'image') {
+                  <img [src]="selectedDocumentUrl()" alt="Predogled dokumenta" />
+                } @else if (selectedDocumentPreviewType() === 'pdf') {
+                  <iframe [src]="selectedDocumentUrl()" title="PDF predogled"></iframe>
+                } @else {
+                  <div class="no-preview">
+                    <mat-icon>description</mat-icon>
+                    <strong>Predogled ni na voljo</strong>
+                    <span>Datoteko lahko odprete v novem zavihku.</span>
+                  </div>
+                }
+              </div>
+            } @else {
+              <div class="no-preview">
+                <mat-icon>folder_open</mat-icon>
+                <strong>Izberite dokument</strong>
+                <span>Na levi izberite datoteko za predogled.</span>
+              </div>
+            }
+          </section>
+        </div>
       </section>
     </mat-tab>
   </mat-tab-group>
