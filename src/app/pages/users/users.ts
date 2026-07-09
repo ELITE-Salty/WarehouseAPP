@@ -566,4 +566,27 @@ export class UsersComponent {
 
     return 'Prišlo je do napake.';
   }
+
+  sendPasswordReset(user: UserListItem): void {
+    const confirmed = window.confirm(
+      `Pošljem povezavo za ponastavitev gesla na ${user.email}?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.usersService.sendPasswordReset(user.email).subscribe({
+      next: (response) => {
+        this.toastService.success(
+          response.message ?? 'E-pošta za ponastavitev gesla je bila poslana.',
+        );
+      },
+      error: (error) => {
+        const message = this.extractErrorMessage(error);
+        this.toastService.error(message);
+      },
+    });
+  }
+
 }

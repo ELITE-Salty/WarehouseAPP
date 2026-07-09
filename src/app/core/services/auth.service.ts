@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, interval, Subscription } from 'rxjs';
 import { APP_CONFIG } from '../config/app-config';
 import { AuthSession, LoginRequest, LoginResponse, RoleCode } from '../models/auth.models';
 import { TokenStorageService } from './token-storage.service';
@@ -13,6 +13,7 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly tokenStorage = inject(TokenStorageService);
+  private refreshSubscription?: Subscription;
 
   readonly currentUser = this.tokenStorage.user;
 
@@ -37,7 +38,7 @@ export class AuthService {
   });
 
   readonly canManageReferenceData = computed(() => {
-    return this.hasAnyRole(['GLOBAL_ADMIN', 'WAREHOUSE_ADMIN', 'COMPANY_ADMIN']);
+    return this.hasAnyRole(['GLOBAL_ADMIN', 'WAREHOUSE_ADMIN', 'COMPANY_ADMIN','COMPANY_USER']);
   });
 
   readonly canManageBilling = computed(() => {
@@ -54,6 +55,7 @@ export class AuthService {
         };
 
         this.tokenStorage.saveSession(session);
+        this.startAutoRefresh();
       }),
     );
   }
@@ -95,6 +97,7 @@ export class AuthService {
 
   forceLogout(): void {
     this.tokenStorage.clearSession();
+    this.stopAutoRefresh();
     this.router.navigate(['/login']);
   }
 
@@ -108,5 +111,28 @@ export class AuthService {
 
   hasAnyRole(roleCodes: RoleCode[]): boolean {
     return roleCodes.some((roleCode) => this.hasRole(roleCode));
+  }
+
+  startAutoRefresh(): void {
+    if (this.refreshSubscription) {
+      return;
+    }
+
+    this.refreshSubscription = interval(10 * 60 * 1000).subscribe(() => {
+      if (!this.tokenStorage.getRefreshToken()) {
+        return;
+      }
+
+      this.refreshSession().subscribe({
+        error: () => {
+          this.forceLogout();
+        },
+      });
+    });
+  }
+
+  stopAutoRefresh(): void {
+    this.refreshSubscription?.unsubscribe();
+    this.refreshSubscription = undefined;
   }
 }

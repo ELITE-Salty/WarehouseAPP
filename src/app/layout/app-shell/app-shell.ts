@@ -23,6 +23,11 @@ const SIDEBAR_COLLAPSED_KEY = 'warehouse-sidebar-collapsed';
   styleUrl: './app-shell.scss',
 })
 export class AppShellComponent {
+
+  constructor() {
+    this.authService.startAutoRefresh();
+  }
+
   private readonly authService = inject(AuthService);
   private readonly themeService = inject(ThemeService);
   private readonly i18n = inject(I18nService);

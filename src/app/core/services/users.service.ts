@@ -63,4 +63,11 @@ export class UsersService {
   resendVerification(userId: string) {
     return this.http.post<ApiSuccessResponse>(`${this.baseUrl}/${userId}/resend-verification`, {});
   }
+
+  sendPasswordReset(email: string) {
+    return this.http.post<ApiSuccessResponse>(
+      `${APP_CONFIG.apiBaseUrl}/auth/forgot-password`,
+      { email },
+    );
+  }
 }

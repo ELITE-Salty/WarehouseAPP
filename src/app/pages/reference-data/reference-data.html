@@ -1,5 +1,353 @@
-<section class="placeholder-page">
-  <p>Šifranti</p>
-  <h1>Šifranti</h1>
-  <span>Ta modul bomo zgradili kasneje.</span>
+<section class="reference-page">
+  <header class="page-header">
+    <div>
+      <p>Šifranti</p>
+      <h1>Enote in kategorije</h1>
+      <span>
+        Upravljanje osnovnih šifrantov, ki jih uporabljamo pri artiklih.
+      </span>
+    </div>
+
+    <div class="header-actions">
+      @if (activeTab() === 'units') {
+        <button class="primary-button" type="button" (click)="openCreateUnitModal()">
+          Dodaj enoto
+        </button>
+      } @else {
+        <button
+          class="primary-button"
+          type="button"
+          (click)="openCreateCategoryModal()"
+        >
+          Dodaj kategorijo
+        </button>
+      }
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="alert alert-error">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  @if (successMessage()) {
+    <div class="alert alert-success">
+      {{ successMessage() }}
+    </div>
+  }
+
+  <section class="tabs-card">
+    <button
+      type="button"
+      [class.active]="activeTab() === 'units'"
+      (click)="setTab('units')"
+    >
+      Enote
+      <span>{{ units().length }}</span>
+    </button>
+
+    <button
+      type="button"
+      [class.active]="activeTab() === 'categories'"
+      (click)="setTab('categories')"
+    >
+      Kategorije artiklov
+      <span>{{ categories().length }}</span>
+    </button>
+  </section>
+
+  <section class="filters-card">
+    <div class="filters-grid">
+      <label>
+        <span>Iskanje</span>
+        <input
+          type="search"
+          placeholder="Naziv, kratica, podjetje ..."
+          [ngModel]="searchTerm()"
+          (ngModelChange)="updateSearch($event)"
+        />
+      </label>
+
+      <label>
+        <span>Podjetje</span>
+        <select
+          [ngModel]="companyFilter()"
+          (ngModelChange)="updateCompanyFilter($event)"
+        >
+          <option value="all">Vsa podjetja</option>
+
+          @for (company of companies(); track company.id) {
+            <option [value]="company.id">
+              {{ company.name }} · {{ company.companyKind }}
+            </option>
+          }
+        </select>
+      </label>
+
+      <div class="filter-actions">
+        <button class="secondary-button" type="button" (click)="loadPage()">
+          Osveži
+        </button>
+        <button type="button" (click)="clearFilters()">Počisti</button>
+      </div>
+    </div>
+  </section>
+
+  @if (activeTab() === 'units') {
+    <section class="data-card">
+      <div class="section-title">
+        <h2>Enote</h2>
+
+        @if (loading()) {
+          <span>Nalaganje ...</span>
+        } @else {
+          <span>{{ filteredUnits().length }} enot</span>
+        }
+      </div>
+
+      <div class="custom-table">
+        <div class="table-header units-header">
+          <span>Naziv</span>
+          <span>Kratica</span>
+          <span>Podjetje</span>
+          <span>Akcije</span>
+        </div>
+
+        @for (unit of filteredUnits(); track unit.id) {
+          <div class="table-row units-row">
+            <div>
+              <strong>{{ unit.name }}</strong>
+            </div>
+
+            <div>
+              <span class="code-pill">{{ unit.abbreviation }}</span>
+            </div>
+
+            <div>
+              <span class="muted">{{ companyName(unit.companyId) }}</span>
+            </div>
+
+            <div class="row-actions">
+              <button type="button" (click)="openEditUnitModal(unit)">
+                Uredi
+              </button>
+
+              <button class="danger-button" type="button" (click)="deleteUnit(unit)">
+                Izbriši
+              </button>
+            </div>
+          </div>
+        }
+
+        @if (!loading() && filteredUnits().length === 0) {
+          <div class="empty-state">
+            Ni enot za prikaz.
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  @if (activeTab() === 'categories') {
+    <section class="data-card">
+      <div class="section-title">
+        <h2>Kategorije artiklov</h2>
+
+        @if (loading()) {
+          <span>Nalaganje ...</span>
+        } @else {
+          <span>{{ filteredCategories().length }} kategorij</span>
+        }
+      </div>
+
+      <div class="custom-table">
+        <div class="table-header categories-header">
+          <span>Naziv</span>
+          <span>Opis</span>
+          <span>Podjetje</span>
+          <span>Akcije</span>
+        </div>
+
+        @for (category of filteredCategories(); track category.id) {
+          <div class="table-row categories-row">
+            <div>
+              <strong>{{ category.name }}</strong>
+            </div>
+
+            <div>
+              <span class="muted">{{ category.description || '-' }}</span>
+            </div>
+
+            <div>
+              <span class="muted">{{ companyName(category.companyId) }}</span>
+            </div>
+
+            <div class="row-actions">
+              <button type="button" (click)="openEditCategoryModal(category)">
+                Uredi
+              </button>
+
+              <button
+                class="danger-button"
+                type="button"
+                (click)="deleteCategory(category)"
+              >
+                Izbriši
+              </button>
+            </div>
+          </div>
+        }
+
+        @if (!loading() && filteredCategories().length === 0) {
+          <div class="empty-state">
+            Ni kategorij za prikaz.
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  @if (modalOpen()) {
+    <div class="modal-backdrop" (click)="closeModal()">
+      <section class="modal-card" (click)="$event.stopPropagation()">
+        <header class="modal-header">
+          <div>
+            <p>Šifranti</p>
+            <h2>{{ modalTitle() }}</h2>
+          </div>
+
+          <button type="button" (click)="closeModal()">×</button>
+        </header>
+
+        <form class="reference-form" (ngSubmit)="saveModal()">
+          @if (errorMessage()) {
+            <div class="modal-alert">
+              {{ errorMessage() }}
+            </div>
+          }
+
+          @if (modalEntity() === 'unit') {
+            @if (modalMode() === 'create') {
+              <label [class.invalid-field]="fieldError('companyId')">
+                <span>Podjetje *</span>
+                <select
+                  name="unitCompanyId"
+                  [ngModel]="unitForm().companyId"
+                  (ngModelChange)="patchUnitForm({ companyId: $event })"
+                >
+                  <option [ngValue]="null">Izberi podjetje</option>
+
+                  @for (company of companies(); track company.id) {
+                    <option [value]="company.id">
+                      {{ company.name }} · {{ company.companyKind }}
+                    </option>
+                  }
+                </select>
+
+                @if (fieldError('companyId')) {
+                  <small>{{ fieldError('companyId') }}</small>
+                }
+              </label>
+            }
+
+            <label [class.invalid-field]="fieldError('name')">
+              <span>Naziv enote *</span>
+              <input
+                type="text"
+                name="unitName"
+                placeholder="Na primer: Pieces"
+                [ngModel]="unitForm().name"
+                (ngModelChange)="patchUnitForm({ name: $event })"
+              />
+
+              @if (fieldError('name')) {
+                <small>{{ fieldError('name') }}</small>
+              }
+            </label>
+
+            <label [class.invalid-field]="fieldError('abbreviation')">
+              <span>Kratica *</span>
+              <input
+                type="text"
+                name="unitAbbreviation"
+                placeholder="Na primer: pcs"
+                [ngModel]="unitForm().abbreviation"
+                (ngModelChange)="patchUnitForm({ abbreviation: $event })"
+              />
+
+              @if (fieldError('abbreviation')) {
+                <small>{{ fieldError('abbreviation') }}</small>
+              }
+            </label>
+          }
+
+          @if (modalEntity() === 'category') {
+            @if (modalMode() === 'create') {
+              <label [class.invalid-field]="fieldError('companyId')">
+                <span>Podjetje *</span>
+                <select
+                  name="categoryCompanyId"
+                  [ngModel]="categoryForm().companyId"
+                  (ngModelChange)="patchCategoryForm({ companyId: $event })"
+                >
+                  <option [ngValue]="null">Izberi podjetje</option>
+
+                  @for (company of companies(); track company.id) {
+                    <option [value]="company.id">
+                      {{ company.name }} · {{ company.companyKind }}
+                    </option>
+                  }
+                </select>
+
+                @if (fieldError('companyId')) {
+                  <small>{{ fieldError('companyId') }}</small>
+                }
+              </label>
+            }
+
+            <label [class.invalid-field]="fieldError('name')">
+              <span>Naziv kategorije *</span>
+              <input
+                type="text"
+                name="categoryName"
+                placeholder="Na primer: Food"
+                [ngModel]="categoryForm().name"
+                (ngModelChange)="patchCategoryForm({ name: $event })"
+              />
+
+              @if (fieldError('name')) {
+                <small>{{ fieldError('name') }}</small>
+              }
+            </label>
+
+            <label class="full-width">
+              <span>Opis</span>
+              <textarea
+                name="categoryDescription"
+                rows="4"
+                placeholder="Neobvezni opis kategorije"
+                [ngModel]="categoryForm().description"
+                (ngModelChange)="patchCategoryForm({ description: $event })"
+              ></textarea>
+            </label>
+          }
+
+          <footer class="modal-actions">
+            <button type="button" class="secondary-button" (click)="closeModal()">
+              Prekliči
+            </button>
+
+            <button class="primary-button" type="submit" [disabled]="saving()">
+              @if (saving()) {
+                Shranjevanje ...
+              } @else {
+                Shrani
+              }
+            </button>
+          </footer>
+        </form>
+      </section>
+    </div>
+  }
 </section>

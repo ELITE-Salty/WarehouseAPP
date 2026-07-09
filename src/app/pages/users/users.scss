@@ -425,28 +425,6 @@
   }
 }
 
-.field-full {
-  grid-column: 1 / -1;
-}
-
-.checkbox-label {
-  grid-column: 1 / -1;
-  display: flex !important;
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-
-  input {
-    width: 18px;
-    height: 18px;
-    flex: 0 0 auto;
-  }
-
-  span {
-    line-height: 1;
-  }
-}
-
 .field-warning {
   color: #92400e;
   font-weight: 800;
