@@ -1,0 +1,158 @@
+.company-detail-page {
+  display: grid;
+  gap: 22px;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+
+  a {
+    display: inline-block;
+    margin-bottom: 14px;
+    color: var(--muted);
+    font-weight: 800;
+    text-decoration: none;
+  }
+
+  p {
+    margin: 0 0 10px;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 13px;
+    font-weight: 900;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(34px, 5vw, 54px);
+    line-height: 0.98;
+    letter-spacing: -0.06em;
+  }
+
+  span {
+    display: block;
+    margin-top: 12px;
+    color: var(--muted);
+  }
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.primary-button,
+.secondary-button {
+  border-radius: 999px;
+  padding: 12px 18px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.primary-button {
+  border: 0;
+  background: var(--primary);
+  color: white;
+}
+
+.secondary-button {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.alert,
+.tab-card {
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.alert {
+  padding: 14px 16px;
+  font-weight: 800;
+}
+
+.alert-error {
+  color: #991b1b;
+  background: #fee2e2;
+  border-color: #fecaca;
+}
+
+.tab-card {
+  margin-top: 18px;
+  padding: 22px;
+}
+
+.detail-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+
+  label {
+    display: grid;
+    gap: 8px;
+  }
+
+  label span {
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  input,
+  select {
+    width: 100%;
+    height: 48px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 0 14px;
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+  }
+}
+
+.checkbox-label {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+
+  input {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.simple-row {
+  padding: 14px 0;
+  display: grid;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+
+  span {
+    color: var(--muted);
+  }
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.mat-mdc-tab-group {
+  color: var(--text);
+}
+
+@media (max-width: 860px) {
+  .page-header {
+    flex-direction: column;
+  }
+
+  .detail-form {
+    grid-template-columns: 1fr;
+  }
+}

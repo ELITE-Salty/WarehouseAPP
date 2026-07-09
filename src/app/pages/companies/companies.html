@@ -1,5 +1,341 @@
-<section class="placeholder-page">
-  <p>Partnerji</p>
-  <h1>Partnerji</h1>
-  <span>Ta modul bomo zgradili kasneje.</span>
+<section class="companies-page">
+  <header class="page-header">
+    <div>
+      <p>Podjetja</p>
+      <h1>Partnerji in podjetja</h1>
+      <span>Upravljanje skladiščnih podjetij, naročnikov, dobaviteljev in prevoznikov.</span>
+    </div>
+
+    <div class="header-actions">
+      <button class="secondary-button" type="button" (click)="loadCompanies()">Osveži</button>
+      <button class="primary-button" type="button" (click)="openCreateModal()">Dodaj podjetje</button>
+    </div>
+  </header>
+
+  <section class="filters-card">
+    <div class="filters-grid">
+      <label>
+        <span>Iskanje</span>
+        <input
+          type="search"
+          placeholder="Naziv, davčna, e-pošta, naslov ..."
+          [ngModel]="searchTerm()"
+          (ngModelChange)="updateSearch($event)"
+        />
+      </label>
+
+      <label>
+        <span>Tip podjetja</span>
+        <select [ngModel]="kindFilter()" (ngModelChange)="updateKindFilter($event)">
+          <option value="all">Vsi tipi</option>
+          @for (kind of companyKinds; track kind) {
+            <option [value]="kind">{{ companyKindLabel(kind) }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        <span>Status</span>
+        <select [ngModel]="activeFilter()" (ngModelChange)="updateActiveFilter($event)">
+          <option value="all">Vsi statusi</option>
+          <option value="active">Aktivna</option>
+          <option value="inactive">Neaktivna</option>
+        </select>
+      </label>
+
+      <div class="filter-actions">
+        <button type="button" (click)="clearFilters()">Počisti</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="companies-card">
+    <div class="section-title">
+      <h2>Seznam podjetij</h2>
+      @if (loading()) {
+        <span>Nalaganje ...</span>
+      } @else {
+        <span>
+          Prikaz {{ showingFrom() }}–{{ showingTo() }} od {{ filteredCompanies().length }} podjetij
+        </span>
+      }
+    </div>
+
+    <div class="custom-table">
+      <div class="table-header">
+        <span>Podjetje</span>
+        <span>Tip</span>
+        <span>Kontakt</span>
+        <span>Naslov</span>
+        <span>Status</span>
+        <span>Akcije</span>
+      </div>
+
+      @for (company of pagedCompanies(); track company.id) {
+        <div class="table-row">
+          <div class="company-cell">
+            <strong>{{ company.name || '-' }}</strong>
+            @if (company.legalName) {
+              <span>{{ company.legalName }}</span>
+            }
+            @if (company.vatNumber) {
+              <small>DDV: {{ company.vatNumber }}</small>
+            }
+          </div>
+
+          <div>
+            <span class="kind-pill" [class]="companyKindClass(company)">
+              {{ companyKindLabel(company.companyKind) }}
+            </span>
+          </div>
+
+          <div class="muted-list">
+            <span>{{ company.email || '-' }}</span>
+            <small>{{ company.phone || '' }}</small>
+          </div>
+
+          <div>
+            <span class="muted">{{ locationLabel(company) }}</span>
+          </div>
+
+          <div>
+            @if (company.active !== false) {
+              <span class="status-pill active">Aktivno</span>
+            } @else {
+              <span class="status-pill inactive">Neaktivno</span>
+            }
+          </div>
+
+          <div class="row-actions">
+            <a class="action-button" [routerLink]="['/app/companies', company.id]">Uredi</a>
+
+            @if (company.active !== false) {
+              <button type="button" (click)="setActive(company, false)">Deaktiviraj</button>
+            } @else {
+              <button type="button" (click)="setActive(company, true)">Aktiviraj</button>
+            }
+          </div>
+        </div>
+      }
+
+      @if (!loading() && pagedCompanies().length === 0) {
+        <div class="empty-state">Ni podjetij za prikaz.</div>
+      }
+    </div>
+
+    <div class="pagination">
+      <div>
+        <span>Na stran:</span>
+        <select [ngModel]="pageSize()" (ngModelChange)="updatePageSize($event)">
+          <option value="50">50</option>
+          <option value="100">100</option>
+          <option value="150">150</option>
+          <option value="200">200</option>
+          <option value="all">Vse</option>
+        </select>
+      </div>
+
+      <div class="page-buttons">
+        <button type="button" (click)="previousPage()" [disabled]="page() <= 1">Prejšnja</button>
+        <strong>Stran {{ page() }} / {{ totalPages() }}</strong>
+        <button type="button" (click)="nextPage()" [disabled]="page() >= totalPages()">Naslednja</button>
+      </div>
+    </div>
+  </section>
+
+  @if (modalOpen()) {
+    <div class="modal-backdrop" (click)="closeModal()">
+      <section class="modal-card" (click)="$event.stopPropagation()">
+        <header class="modal-header">
+          <div>
+            <p>Podjetja</p>
+            <h2>Dodaj podjetje</h2>
+          </div>
+          <button type="button" (click)="closeModal()">×</button>
+        </header>
+
+        @if (modalErrorMessage()) {
+          <div class="modal-alert">{{ modalErrorMessage() }}</div>
+        }
+
+        <mat-horizontal-stepper [linear]="false">
+          <mat-step label="Podjetje">
+            <form class="company-form">
+              <label [class.invalid-field]="fieldError('name')">
+                <span>Naziv podjetja *</span>
+                <input
+                  type="text"
+                  [ngModel]="form().name"
+                  name="name"
+                  (ngModelChange)="patchForm({ name: $event })"
+                />
+                @if (fieldError('name')) {
+                  <small>{{ fieldError('name') }}</small>
+                }
+              </label>
+
+              <label [class.invalid-field]="fieldError('companyKind')">
+                <span>Tip podjetja *</span>
+                <select
+                  [ngModel]="form().companyKind"
+                  name="companyKind"
+                  (ngModelChange)="patchForm({ companyKind: $event })"
+                >
+                  @for (kind of companyKinds; track kind) {
+                    <option [value]="kind">{{ companyKindLabel(kind) }}</option>
+                  }
+                </select>
+              </label>
+
+              <label>
+                <span>Pravni naziv</span>
+                <input type="text" name="legalName" [ngModel]="form().legalName" (ngModelChange)="patchForm({ legalName: $event })" />
+              </label>
+
+              <label>
+                <span>Kratki naziv</span>
+                <input type="text" name="shortName" [ngModel]="form().shortName" (ngModelChange)="patchForm({ shortName: $event })" />
+              </label>
+
+              <label>
+                <span>DDV številka</span>
+                <input type="text" name="vatNumber" [ngModel]="form().vatNumber" (ngModelChange)="patchForm({ vatNumber: $event })" />
+              </label>
+
+              <label>
+                <span>Matična številka</span>
+                <input type="text" name="registrationNumber" [ngModel]="form().registrationNumber" (ngModelChange)="patchForm({ registrationNumber: $event })" />
+              </label>
+
+              <label>
+                <span>E-pošta</span>
+                <input type="email" name="email" [ngModel]="form().email" (ngModelChange)="patchForm({ email: $event })" />
+              </label>
+
+              <label>
+                <span>Telefon</span>
+                <input type="text" name="phone" [ngModel]="form().phone" (ngModelChange)="patchForm({ phone: $event })" />
+              </label>
+
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  name="active"
+                  [ngModel]="form().active"
+                  (ngModelChange)="patchForm({ active: $event })"
+                />
+                <span>Podjetje je aktivno</span>
+              </label>
+
+              <footer class="step-actions">
+                <button class="primary-button" type="button" matStepperNext>Naprej</button>
+              </footer>
+            </form>
+          </mat-step>
+
+          <mat-step label="Lokacija">
+            <form class="company-form">
+              <label>
+                <span>Naziv lokacije</span>
+                <input type="text" name="locationName" [ngModel]="form().locationName" (ngModelChange)="patchForm({ locationName: $event })" />
+              </label>
+
+              <label [class.invalid-field]="fieldError('street')">
+                <span>Ulica</span>
+                <input type="text" name="street" [ngModel]="form().street" (ngModelChange)="patchForm({ street: $event })" />
+                @if (fieldError('street')) {
+                  <small>{{ fieldError('street') }}</small>
+                }
+              </label>
+
+              <label [class.invalid-field]="fieldError('postCode')">
+                <span>Poštna številka</span>
+                <input type="text" name="postCode" [ngModel]="form().postCode" (ngModelChange)="patchForm({ postCode: $event })" />
+                @if (fieldError('postCode')) {
+                  <small>{{ fieldError('postCode') }}</small>
+                }
+              </label>
+
+              <label [class.invalid-field]="fieldError('city')">
+                <span>Mesto</span>
+                <input type="text" name="city" [ngModel]="form().city" (ngModelChange)="patchForm({ city: $event })" />
+                @if (fieldError('city')) {
+                  <small>{{ fieldError('city') }}</small>
+                }
+              </label>
+
+              <label [class.invalid-field]="fieldError('country')">
+                <span>Država</span>
+                <input type="text" name="country" [ngModel]="form().country" (ngModelChange)="patchForm({ country: $event })" />
+                @if (fieldError('country')) {
+                  <small>{{ fieldError('country') }}</small>
+                }
+              </label>
+
+              <footer class="step-actions">
+                <button class="secondary-button" type="button" matStepperPrevious>Nazaj</button>
+                <button class="primary-button" type="button" matStepperNext>Naprej</button>
+              </footer>
+            </form>
+          </mat-step>
+
+          <mat-step label="Kontakt">
+            <form class="company-form">
+              <label [class.invalid-field]="fieldError('contactName')">
+                <span>Ime kontakta</span>
+                <input type="text" name="contactName" [ngModel]="form().contactName" (ngModelChange)="patchForm({ contactName: $event })" />
+                @if (fieldError('contactName')) {
+                  <small>{{ fieldError('contactName') }}</small>
+                }
+              </label>
+
+              <label [class.invalid-field]="fieldError('contactSurname')">
+                <span>Priimek kontakta</span>
+                <input type="text" name="contactSurname" [ngModel]="form().contactSurname" (ngModelChange)="patchForm({ contactSurname: $event })" />
+                @if (fieldError('contactSurname')) {
+                  <small>{{ fieldError('contactSurname') }}</small>
+                }
+              </label>
+
+              <label>
+                <span>E-pošta kontakta</span>
+                <input type="email" name="contactEmail" [ngModel]="form().contactEmail" (ngModelChange)="patchForm({ contactEmail: $event })" />
+              </label>
+
+              <label>
+                <span>Telefon kontakta</span>
+                <input type="text" name="contactPhone" [ngModel]="form().contactPhone" (ngModelChange)="patchForm({ contactPhone: $event })" />
+              </label>
+
+              <label class="checkbox-label">
+                <input type="checkbox" name="contactOrderNotifications" [ngModel]="form().contactOrderNotifications" (ngModelChange)="patchForm({ contactOrderNotifications: $event })" />
+                <span>Prejema obvestila o naročilih</span>
+              </label>
+
+              <label class="checkbox-label">
+                <input type="checkbox" name="contactDocumentEmails" [ngModel]="form().contactDocumentEmails" (ngModelChange)="patchForm({ contactDocumentEmails: $event })" />
+                <span>Prejema dokumente</span>
+              </label>
+
+              <label class="checkbox-label">
+                <input type="checkbox" name="contactLowStockAlerts" [ngModel]="form().contactLowStockAlerts" (ngModelChange)="patchForm({ contactLowStockAlerts: $event })" />
+                <span>Prejema opozorila nizke zaloge</span>
+              </label>
+
+              <footer class="step-actions">
+                <button class="secondary-button" type="button" matStepperPrevious>Nazaj</button>
+                <button class="primary-button" type="button" (click)="createCompany()" [disabled]="saving()">
+                  @if (saving()) {
+                    Shranjevanje ...
+                  } @else {
+                    Ustvari podjetje
+                  }
+                </button>
+              </footer>
+            </form>
+          </mat-step>
+        </mat-horizontal-stepper>
+      </section>
+    </div>
+  }
 </section>

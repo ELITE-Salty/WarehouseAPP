@@ -1,0 +1,144 @@
+<section class="company-detail-page">
+  <header class="page-header">
+    <div>
+      <a routerLink="/app/companies">← Nazaj na podjetja</a>
+      <p>Podjetje</p>
+      <h1>{{ company()?.name || 'Podjetje' }}</h1>
+      <span>Urejanje podatkov, kontaktov, lokacij in nastavitev dokumentov.</span>
+    </div>
+
+    <div class="header-actions">
+      <button class="secondary-button" type="button" (click)="loadCompany()">Osveži</button>
+      <button class="primary-button" type="button" (click)="saveCompany()" [disabled]="saving()">
+        @if (saving()) {
+          Shranjevanje ...
+        } @else {
+          Shrani
+        }
+      </button>
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="alert alert-error">{{ errorMessage() }}</div>
+  }
+
+  <mat-tab-group>
+    <mat-tab label="Podatki">
+      <section class="tab-card">
+        <form class="detail-form">
+          <label>
+            <span>Naziv podjetja *</span>
+            <input
+              type="text"
+              name="name"
+              [ngModel]="form().name"
+              (ngModelChange)="patchForm({ name: $event })"
+            />
+          </label>
+
+          <label>
+            <span>Tip podjetja</span>
+            <select
+              name="companyKind"
+              [ngModel]="form().companyKind"
+              (ngModelChange)="patchForm({ companyKind: $event })"
+            >
+              @for (kind of companyKinds; track kind) {
+                <option [value]="kind">{{ companyKindLabel(kind) }}</option>
+              }
+            </select>
+          </label>
+
+          <label>
+            <span>Pravni naziv</span>
+            <input type="text" name="legalName" [ngModel]="form().legalName" (ngModelChange)="patchForm({ legalName: $event })" />
+          </label>
+
+          <label>
+            <span>Kratki naziv</span>
+            <input type="text" name="shortName" [ngModel]="form().shortName" (ngModelChange)="patchForm({ shortName: $event })" />
+          </label>
+
+          <label>
+            <span>DDV številka</span>
+            <input type="text" name="vatNumber" [ngModel]="form().vatNumber" (ngModelChange)="patchForm({ vatNumber: $event })" />
+          </label>
+
+          <label>
+            <span>Matična številka</span>
+            <input type="text" name="registrationNumber" [ngModel]="form().registrationNumber" (ngModelChange)="patchForm({ registrationNumber: $event })" />
+          </label>
+
+          <label>
+            <span>E-pošta</span>
+            <input type="email" name="email" [ngModel]="form().email" (ngModelChange)="patchForm({ email: $event })" />
+          </label>
+
+          <label>
+            <span>Telefon</span>
+            <input type="text" name="phone" [ngModel]="form().phone" (ngModelChange)="patchForm({ phone: $event })" />
+          </label>
+
+          <label>
+            <span>Spletna stran</span>
+            <input type="text" name="website" [ngModel]="form().website" (ngModelChange)="patchForm({ website: $event })" />
+          </label>
+
+          <label class="checkbox-label">
+            <input type="checkbox" name="active" [ngModel]="form().active" (ngModelChange)="patchForm({ active: $event })" />
+            <span>Podjetje je aktivno</span>
+          </label>
+        </form>
+      </section>
+    </mat-tab>
+
+    <mat-tab label="Kontakti">
+      <section class="tab-card">
+        <h2>Kontakti</h2>
+        <p>Kontaktno urejanje bomo dodali v naslednjem prehodu.</p>
+
+        @if (company()?.contacts?.length) {
+          @for (contact of company()?.contacts; track contact.id) {
+            <div class="simple-row">
+              <strong>{{ contact.name }} {{ contact.surname }}</strong>
+              <span>{{ contact.email || '-' }}</span>
+            </div>
+          }
+        } @else {
+          <p class="muted">Ni kontaktov za prikaz.</p>
+        }
+      </section>
+    </mat-tab>
+
+    <mat-tab label="Lokacije">
+      <section class="tab-card">
+        <h2>Lokacija podjetja</h2>
+
+        @if (company()?.location) {
+          <div class="simple-row">
+            <strong>{{ company()?.location?.name || 'Naslov' }}</strong>
+            <span>
+              {{ company()?.location?.street }},
+              {{ company()?.location?.postCode }}
+              {{ company()?.location?.city }},
+              {{ company()?.location?.country }}
+            </span>
+          </div>
+        } @else {
+          <p class="muted">Podjetje nima vpisane lokacije.</p>
+        }
+      </section>
+    </mat-tab>
+
+    <mat-tab label="Dokumenti">
+      <section class="tab-card">
+        <h2>Nastavitve dokumentov</h2>
+        <p>
+          Tukaj bomo dodali logo, nogo dokumenta, pogoje, privzeti jezik,
+          valuto in samodejno pošiljanje CMR/Dobavnice.
+        </p>
+      </section>
+    </mat-tab>
+  </mat-tab-group>
+</section>

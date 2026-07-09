@@ -8,6 +8,7 @@ import { Orders } from './pages/orders/orders';
 import { Stock } from './pages/stock/stock';
 import { Items } from './pages/items/items';
 import { Companies } from './pages/companies/companies';
+import { CompanyDetail } from './pages/company-detail/company-detail';
 import { WarehouseLocations } from './pages/warehouse-locations/warehouse-locations';
 import { UsersComponent } from './pages/users/users';
 import { ReferenceData } from './pages/reference-data/reference-data';
@@ -49,6 +50,11 @@ export const routes: Routes = [
         path: 'items',
         component: Items,
         title: 'Items | Warehouse PWA',
+      },
+      {
+        path: 'companies/:id',
+        component: CompanyDetail,
+        title: 'Company | Warehouse PWA',
       },
       {
         path: 'companies',
