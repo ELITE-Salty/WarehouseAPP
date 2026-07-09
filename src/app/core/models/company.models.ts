@@ -75,6 +75,17 @@ export interface CompanyItem {
   updated_at?: string;
 }
 
+export interface UpdateCompanyContactRequest {
+  name?: string;
+  surname?: string;
+  email?: string | null;
+  phone?: string | null;
+  receivesOrderNotifications?: boolean;
+  receivesDocumentEmails?: boolean;
+  receivesLowStockAlerts?: boolean;
+  active?: boolean;
+}
+
 export interface CreateCompanyRequest {
   name: string;
   companyKind: CompanyKind;

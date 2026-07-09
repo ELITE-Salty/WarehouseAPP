@@ -93,20 +93,106 @@
       </section>
     </mat-tab>
 
-    <mat-tab label="Kontakti">
-      <section class="tab-card">
-        <h2>Kontakti</h2>
-        <p>Kontaktno urejanje bomo dodali v naslednjem prehodu.</p>
+   <mat-tab label="Kontakti">
+      <section class="tab-card contacts-tab-card">
+        <div class="tab-card-header">
+          <div>
+            <h2>Kontakti</h2>
+            <p class="muted">
+              Kontakti za naročila, dokumente in opozorila nizke zaloge.
+            </p>
+          </div>
 
-        @if (company()?.contacts?.length) {
-          @for (contact of company()?.contacts; track contact.id) {
-            <div class="simple-row">
-              <strong>{{ contact.name }} {{ contact.surname }}</strong>
-              <span>{{ contact.email || '-' }}</span>
-            </div>
-          }
+          <button class="primary-button" type="button" (click)="openCreateContactModal()">
+            Dodaj kontakt
+          </button>
+        </div>
+
+        <section class="contact-filters">
+          <label>
+            <span>Iskanje</span>
+            <input
+              type="search"
+              placeholder="Ime, e-pošta ali telefon ..."
+              [ngModel]="contactSearchTerm()"
+              (ngModelChange)="updateContactSearch($event)"
+            />
+          </label>
+
+          <label>
+            <span>Status</span>
+            <select
+              [ngModel]="contactActiveFilter()"
+              (ngModelChange)="updateContactActiveFilter($event)"
+            >
+              <option value="active">Samo aktivni</option>
+              <option value="inactive">Samo neaktivni</option>
+              <option value="all">Vsi kontakti</option>
+            </select>
+          </label>
+
+          <div>
+            <button class="secondary-button" type="button" (click)="clearContactFilters()">
+              Počisti
+            </button>
+          </div>
+        </section>
+
+        @if (filteredContacts().length) {
+          <div class="contacts-grid">
+            @for (contact of filteredContacts(); track contact.id) {
+              <article class="contact-card" [class.inactive]="!(contact.active ?? true)">
+                <div class="contact-card-header">
+                  <div>
+                    <strong>{{ contact.name }} {{ contact.surname }}</strong>
+
+                    @if (contact.active ?? true) {
+                      <span class="status-pill active">Aktiven</span>
+                    } @else {
+                      <span class="status-pill inactive">Neaktiven</span>
+                    }
+                  </div>
+
+                  <div class="contact-actions">
+                    <button type="button" (click)="openEditContactModal(contact)">
+                      Uredi
+                    </button>
+
+                    <button type="button" (click)="toggleContactActive(contact)">
+                      @if (contact.active ?? true) {
+                        Deaktiviraj
+                      } @else {
+                        Aktiviraj
+                      }
+                    </button>
+                  </div>
+                </div>
+
+                <div class="contact-info">
+                  <span>{{ contact.email || '-' }}</span>
+                  <span>{{ contact.phone || '-' }}</span>
+                </div>
+
+                <div class="contact-flags">
+                  @if (contact.receivesOrderNotifications) {
+                    <span>Naročila</span>
+                  }
+
+                  @if (contact.receivesDocumentEmails) {
+                    <span>Dokumenti</span>
+                  }
+
+                  @if (contact.receivesLowStockAlerts) {
+                    <span>Nizka zaloga</span>
+                  }
+                </div>
+              </article>
+            }
+          </div>
         } @else {
-          <p class="muted">Ni kontaktov za prikaz.</p>
+          <div class="empty-state">
+            Ni kontaktov za prikaz.
+          </div>
         }
       </section>
     </mat-tab>
@@ -207,4 +293,140 @@
       </section>
     </mat-tab>
   </mat-tab-group>
+
+  @if (contactModalOpen()) {
+    <div class="modal-backdrop" (click)="closeContactModal()">
+      <section class="modal-card contact-modal-card" (click)="$event.stopPropagation()">
+        <header class="modal-header">
+          <div>
+            <p>Kontakti</p>
+            <h2>{{ contactModalTitle() }}</h2>
+          </div>
+
+          <button type="button" (click)="closeContactModal()">×</button>
+        </header>
+
+        <form class="contact-form" (ngSubmit)="saveContact()">
+          @if (contactErrorMessage()) {
+            <div class="modal-alert">
+              {{ contactErrorMessage() }}
+            </div>
+          }
+
+          <label [class.invalid-field]="contactFieldError('name')">
+            <span>Ime *</span>
+            <input
+              type="text"
+              name="contactName"
+              [ngModel]="contactForm().name"
+              (ngModelChange)="patchContactForm({ name: $event })"
+            />
+
+            @if (contactFieldError('name')) {
+              <small>{{ contactFieldError('name') }}</small>
+            }
+          </label>
+
+          <label [class.invalid-field]="contactFieldError('surname')">
+            <span>Priimek *</span>
+            <input
+              type="text"
+              name="contactSurname"
+              [ngModel]="contactForm().surname"
+              (ngModelChange)="patchContactForm({ surname: $event })"
+            />
+
+            @if (contactFieldError('surname')) {
+              <small>{{ contactFieldError('surname') }}</small>
+            }
+          </label>
+
+          <label [class.invalid-field]="contactFieldError('email')">
+            <span>E-pošta</span>
+            <input
+              type="email"
+              name="contactEmail"
+              placeholder="ime@podjetje.si"
+              [ngModel]="contactForm().email"
+              (ngModelChange)="patchContactForm({ email: $event })"
+            />
+
+            @if (contactFieldError('email')) {
+              <small>{{ contactFieldError('email') }}</small>
+            }
+          </label>
+
+          <label [class.invalid-field]="contactFieldError('phone')">
+            <span>Telefon</span>
+            <input
+              type="text"
+              name="contactPhone"
+              placeholder="+386 41 222 333"
+              [ngModel]="contactForm().phone"
+              (ngModelChange)="patchContactForm({ phone: $event })"
+            />
+
+            @if (contactFieldError('phone')) {
+              <small>{{ contactFieldError('phone') }}</small>
+            }
+          </label>
+
+          <label class="checkbox-label">
+            <input
+              type="checkbox"
+              name="receivesOrderNotifications"
+              [ngModel]="contactForm().receivesOrderNotifications"
+              (ngModelChange)="patchContactForm({ receivesOrderNotifications: $event })"
+            />
+            <span>Prejema obvestila o naročilih</span>
+          </label>
+
+          <label class="checkbox-label">
+            <input
+              type="checkbox"
+              name="receivesDocumentEmails"
+              [ngModel]="contactForm().receivesDocumentEmails"
+              (ngModelChange)="patchContactForm({ receivesDocumentEmails: $event })"
+            />
+            <span>Prejema dokumente po e-pošti</span>
+          </label>
+
+          <label class="checkbox-label">
+            <input
+              type="checkbox"
+              name="receivesLowStockAlerts"
+              [ngModel]="contactForm().receivesLowStockAlerts"
+              (ngModelChange)="patchContactForm({ receivesLowStockAlerts: $event })"
+            />
+            <span>Prejema opozorila nizke zaloge</span>
+          </label>
+
+          <label class="checkbox-label">
+            <input
+              type="checkbox"
+              name="contactActive"
+              [ngModel]="contactForm().active"
+              (ngModelChange)="patchContactForm({ active: $event })"
+            />
+            <span>Kontakt je aktiven</span>
+          </label>
+
+          <footer class="modal-actions">
+            <button type="button" class="secondary-button" (click)="closeContactModal()">
+              Prekliči
+            </button>
+
+            <button class="primary-button" type="submit" [disabled]="contactSaving()">
+              @if (contactSaving()) {
+                Shranjevanje ...
+              } @else {
+                Shrani kontakt
+              }
+            </button>
+          </footer>
+        </form>
+      </section>
+    </div>
+  }
+
 </section>

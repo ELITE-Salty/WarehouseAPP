@@ -10,6 +10,7 @@ import {
   CompanyItem,
   CreateCompanyContactRequest,
   CreateCompanyRequest,
+  UpdateCompanyContactRequest,
   UpdateCompanyRequest,
 } from '../models/company.models';
 
@@ -63,4 +64,16 @@ export class CompaniesService {
       payload,
     );
   }
+
+  updateContact(
+    companyId: string,
+    contactId: string,
+    payload: UpdateCompanyContactRequest,
+  ) {
+    return this.http.patch<ApiSuccessResponse>(
+      `${this.baseUrl}/${companyId}/contacts/${contactId}`,
+      payload,
+    );
+  }
+  
 }
