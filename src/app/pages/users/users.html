@@ -1,0 +1,374 @@
+<section class="users-page">
+  <header class="page-header">
+    <div>
+      <p>Uporabniki</p>
+      <h1>Upravljanje uporabnikov</h1>
+      <span>Dodajanje, urejanje, filtriranje in upravljanje dostopa.</span>
+    </div>
+
+    @if (canManageUsers()) {
+      <button class="primary-button" type="button" (click)="openCreateModal()">
+        Dodaj uporabnika
+      </button>
+    }
+  </header>
+
+  @if (errorMessage()) {
+    <div class="alert alert-error">
+      {{ errorMessage() }}
+    </div>
+  }
+
+  @if (successMessage()) {
+    <div class="alert alert-success">
+      {{ successMessage() }}
+    </div>
+  }
+
+  @if (createdTemporaryPassword()) {
+    <div class="temporary-password-box">
+      <strong>Začasno geslo:</strong>
+      <code>{{ createdTemporaryPassword() }}</code>
+      <span>Shrani ga zdaj, ker ga kasneje ne bomo več prikazali.</span>
+    </div>
+  }
+
+  <section class="filters-card">
+    <div class="filters-grid">
+      <label>
+        <span>Iskanje</span>
+        <input
+          type="search"
+          placeholder="Ime, e-pošta, uporabniško ime, vloga ..."
+          [ngModel]="searchTerm()"
+          (ngModelChange)="updateSearch($event)"
+        />
+      </label>
+
+      <label>
+        <span>Vloga</span>
+        <select
+          [ngModel]="roleFilter()"
+          (ngModelChange)="updateRoleFilter($event)"
+        >
+          <option value="all">Vse vloge</option>
+
+          @for (role of roles(); track role) {
+            <option [value]="role">{{ roleLabel(role.code) }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        <span>Podjetje</span>
+        <select
+          [ngModel]="companyFilter()"
+          (ngModelChange)="updateCompanyFilter($event)"
+        >
+          <option value="all">Vsa podjetja</option>
+
+          @for (company of companies(); track company.id) {
+            <option [value]="company.id">
+              {{ company.name }} · {{ company.companyKind }}
+            </option>
+          }
+        </select>
+      </label>
+
+      <label>
+        <span>Status</span>
+        <select
+          [ngModel]="activeFilter()"
+          (ngModelChange)="updateActiveFilter($event)"
+        >
+          <option value="all">Vsi statusi</option>
+          <option value="active">Aktivni</option>
+          <option value="inactive">Neaktivni</option>
+          <option value="unconfirmed">E-mail ni potrjen</option>
+        </select>
+      </label>
+
+      <div class="filter-actions">
+        <button type="button" (click)="clearFilters()">Počisti</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="users-card">
+    <div class="section-title">
+      <h2>Seznam uporabnikov</h2>
+
+      @if (loading()) {
+        <span>Nalaganje ...</span>
+      } @else {
+        <span>
+          Prikaz {{ showingFrom() }}–{{ showingTo() }} od
+          {{ filteredUsers().length }} uporabnikov
+        </span>
+      }
+    </div>
+
+    <div class="custom-table">
+      <div class="table-header">
+        <span>Uporabnik</span>
+        <span>Vloga</span>
+        <span>Podjetje</span>
+        <span>Status</span>
+        <span>Akcije</span>
+      </div>
+
+      @for (user of pagedUsers(); track user.id) {
+        <div class="table-row">
+          <div class="user-cell">
+            <strong>{{ user.name }} {{ user.surname }}</strong>
+            <span>{{ user.email }}</span>
+            <small>{{ user.username }}</small>
+          </div>
+
+          <div>
+            <span class="role-badge">
+              {{ roleLabel(primaryRole(user)) }}
+            </span>
+          </div>
+
+          <div>
+            <span class="muted">{{ companyLabel(user) }}</span>
+          </div>
+
+          <div>
+            @if (user.active) {
+              <span class="status-pill active">Aktiven</span>
+            } @else {
+              <span class="status-pill inactive">Neaktiven</span>
+            }
+
+            @if (!user.emailConfirmed) {
+              <span class="status-pill warning">E-mail ni potrjen</span>
+            }
+          </div>
+
+          <div class="row-actions">
+            <button type="button" (click)="openEditModal(user)">
+              Uredi
+            </button>
+
+            @if (user.active) {
+              <button type="button" (click)="setActive(user, false)">
+                Deaktiviraj
+              </button>
+            } @else {
+              <button type="button" (click)="setActive(user, true)">
+                Aktiviraj
+              </button>
+            }
+
+            @if (!user.emailConfirmed) {
+              <button type="button" (click)="resendVerification(user)">
+                Verifikacija
+              </button>
+            }
+
+            <button class="danger-button" type="button" (click)="deleteUser(user)">
+              Izbriši
+            </button>
+          </div>
+        </div>
+      }
+
+      @if (!loading() && pagedUsers().length === 0) {
+        <div class="empty-state">
+          Ni uporabnikov za prikaz.
+        </div>
+      }
+    </div>
+
+    <div class="pagination">
+      <div>
+        <span>Na stran:</span>
+        <select
+          [ngModel]="pageSize()"
+          (ngModelChange)="updatePageSize($event)"
+        >
+          <option [value]="5">5</option>
+          <option [value]="10">10</option>
+          <option [value]="20">20</option>
+          <option [value]="50">50</option>
+        </select>
+      </div>
+
+      <div class="page-buttons">
+        <button type="button" (click)="previousPage()" [disabled]="page() <= 1">
+          Prejšnja
+        </button>
+
+        <strong>Stran {{ page() }} / {{ totalPages() }}</strong>
+
+        <button
+          type="button"
+          (click)="nextPage()"
+          [disabled]="page() >= totalPages()"
+        >
+          Naslednja
+        </button>
+      </div>
+    </div>
+  </section>
+
+  @if (modalOpen()) {
+    <div class="modal-backdrop" (click)="closeModal()">
+      <section class="modal-card" (click)="$event.stopPropagation()">
+        <header class="modal-header">
+          <div>
+            @if (modalMode() === 'create') {
+              <p>Nov uporabnik</p>
+              <h2>Dodaj uporabnika</h2>
+            } @else {
+              <p>Urejanje</p>
+              <h2>Uredi uporabnika</h2>
+            }
+          </div>
+
+          <button type="button" (click)="closeModal()">×</button>
+        </header>
+
+        <form class="user-form" (ngSubmit)="saveModal()">
+          <label>
+            <span>Uporabniško ime *</span>
+            <input
+              type="text"
+              name="username"
+              [ngModel]="form().username"
+              (ngModelChange)="patchForm({ username: $event })"
+            />
+          </label>
+
+          <label>
+            <span>Ime *</span>
+            <input
+              type="text"
+              name="name"
+              [ngModel]="form().name"
+              (ngModelChange)="patchForm({ name: $event })"
+            />
+          </label>
+
+          <label>
+            <span>Priimek *</span>
+            <input
+              type="text"
+              name="surname"
+              [ngModel]="form().surname"
+              (ngModelChange)="patchForm({ surname: $event })"
+            />
+          </label>
+
+          <label>
+            <span>E-pošta *</span>
+            <input
+              type="email"
+              name="email"
+              [ngModel]="form().email"
+              (ngModelChange)="patchForm({ email: $event })"
+            />
+          </label>
+
+            <label>
+              <span>Vloga *</span>
+              <select
+                name="roleCode"
+                [ngModel]="form().roleCode"
+                (ngModelChange)="patchForm({ roleCode: $event })"
+              >
+                @for (role of roles(); track role.code) {
+                  <option [value]="role.code">{{ roleLabel(role.code) }}</option>
+                }
+              </select>
+
+
+            @if (roles().length === 0) {
+              <small class="field-warning">
+                Vloge niso naložene. Preverite create-options endpoint.
+              </small>
+            }
+          </label>
+
+          @if (form().roleCode !== 'GLOBAL_ADMIN') {
+            <label>
+              <span>Podjetje *</span>
+              <select
+                name="companyId"
+                [ngModel]="form().companyId"
+                (ngModelChange)="patchForm({ companyId: $event })"
+              >
+                <option [ngValue]="null">Izberi podjetje</option>
+
+                @for (company of filteredCompanies(); track company.id) {
+                  <option [value]="company.id">
+                    {{ company.name }} · {{ company.companyKind }}
+                  </option>
+                }
+              </select>
+
+              @if (companies().length === 0) {
+                <small class="field-warning">
+                  Podjetja niso naložena ali jih ta uporabnik ne sme dodeljevati.
+                </small>
+              }
+            </label>
+          }
+
+          @if (modalMode() === 'create') {
+            <label>
+              <span>Začasno geslo</span>
+              <input
+                type="text"
+                name="temporaryPassword"
+                placeholder="Pusti prazno za avtomatsko geslo"
+                [ngModel]="form().temporaryPassword"
+                (ngModelChange)="patchForm({ temporaryPassword: $event })"
+              />
+            </label>
+
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                name="sendVerificationEmail"
+                [ngModel]="form().sendVerificationEmail"
+                (ngModelChange)="patchForm({ sendVerificationEmail: $event })"
+              />
+              <span>Pošlji verifikacijski e-mail</span>
+            </label>
+          }
+
+          @if (modalMode() === 'edit') {
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                name="emailConfirmed"
+                [ngModel]="form().emailConfirmed"
+                (ngModelChange)="patchForm({ emailConfirmed: $event })"
+              />
+              <span>E-mail potrjen</span>
+            </label>
+          }
+
+          <footer class="modal-actions">
+            <button type="button" class="secondary-button" (click)="closeModal()">
+              Prekliči
+            </button>
+
+            <button class="primary-button" type="submit" [disabled]="saving()">
+              @if (saving()) {
+                Shranjevanje ...
+              } @else if (modalMode() === 'create') {
+                Ustvari uporabnika
+              } @else {
+                Shrani spremembe
+              }
+            </button>
+          </footer>
+        </form>
+      </section>
+    </div>
+  }
+</section>

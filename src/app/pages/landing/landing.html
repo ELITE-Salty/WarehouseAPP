@@ -1,0 +1,99 @@
+<main class="landing-shell">
+  <nav class="topbar">
+    <div class="brand">
+      <div class="brand-mark">W</div>
+      <div>
+        <strong>{{ t('common.appName') }}</strong>
+        <span>Multi-company warehouse management</span>
+      </div>
+    </div>
+
+    <div class="topbar-actions">
+      <button class="theme-toggle" type="button" (click)="toggleLanguage()">
+        {{ languageButtonLabel() }}
+      </button>
+
+      <button class="theme-toggle" type="button" (click)="toggleTheme()">
+        {{ isDarkMode ? t('common.lightMode') : t('common.darkMode') }}
+      </button>
+
+      <a class="login-link" href="#">
+        {{ t('common.login') }}
+      </a>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-content">
+      <p class="eyebrow">{{ t('landing.eyebrow') }}</p>
+
+      <h1>
+        {{ t('landing.title') }}
+      </h1>
+
+      <p class="hero-text">
+        {{ t('landing.subtitle') }}
+      </p>
+
+      <div class="hero-actions">
+        <a class="primary-button" href="#">
+          {{ t('common.getStarted') }}
+        </a>
+
+        <a class="secondary-button" href="#">
+          {{ t('common.viewModules') }}
+        </a>
+      </div>
+    </div>
+
+    <div class="hero-card">
+      <div class="card-header">
+        <span>{{ t('landing.today') }}</span>
+        <strong>{{ t('landing.overview') }}</strong>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span>{{ t('landing.orders') }}</span>
+          <strong>18</strong>
+          <small>{{ t('landing.inboundOutbound') }}</small>
+        </div>
+
+        <div class="stat-card">
+          <span>{{ t('landing.stockAlerts') }}</span>
+          <strong>4</strong>
+          <small>{{ t('landing.lowStockItems') }}</small>
+        </div>
+
+        <div class="stat-card">
+          <span>{{ t('landing.documents') }}</span>
+          <strong>12</strong>
+          <small>{{ t('landing.readyToSend') }}</small>
+        </div>
+
+        <div class="stat-card">
+          <span>{{ t('landing.locations') }}</span>
+          <strong>36</strong>
+          <small>{{ t('landing.activeBins') }}</small>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="feature-section">
+    <article class="feature">
+      <h2>{{ t('landing.warehouseTeamsTitle') }}</h2>
+      <p>{{ t('landing.warehouseTeamsText') }}</p>
+    </article>
+
+    <article class="feature">
+      <h2>{{ t('landing.customerCompaniesTitle') }}</h2>
+      <p>{{ t('landing.customerCompaniesText') }}</p>
+    </article>
+
+    <article class="feature">
+      <h2>{{ t('landing.adminsTitle') }}</h2>
+      <p>{{ t('landing.adminsText') }}</p>
+    </article>
+  </section>
+</main>

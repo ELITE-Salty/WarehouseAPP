@@ -1,0 +1,77 @@
+<main class="login-page">
+  <section class="login-card">
+    <div class="brand">
+      <div class="brand-logo">W</div>
+      <div>
+        <strong>Warehouse PWA</strong>
+        <span>Skladiščni sistem</span>
+      </div>
+    </div>
+
+    <div class="heading">
+      <p>Prijava</p>
+      <h1>Dobrodošli nazaj.</h1>
+      <span>
+        Prijavite se za dostop do naročil, zaloge, dokumentov in nadzorne plošče.
+      </span>
+    </div>
+
+    <form class="login-form" (ngSubmit)="submit()">
+      <label>
+        <span>E-pošta</span>
+        <input
+          type="email"
+          name="email"
+          autocomplete="email"
+          [(ngModel)]="email"
+        />
+      </label>
+
+      <label>
+        <span>Geslo</span>
+        <input
+          type="password"
+          name="password"
+          autocomplete="current-password"
+          [(ngModel)]="password"
+        />
+      </label>
+
+      @if (errorMessage()) {
+        <div class="error-message">
+          {{ errorMessage() }}
+        </div>
+      }
+
+      <button type="submit" [disabled]="loading()">
+        @if (loading()) {
+          Prijavljanje ...
+        } @else {
+          Prijava
+        }
+      </button>
+    </form>
+  </section>
+
+  <section class="preview">
+    <div class="preview-card">
+      <p>Pregled skladišča</p>
+      <h2>18 naročil danes</h2>
+
+      <div class="preview-row">
+        <span class="dot green"></span>
+        <strong>9 zaključeno</strong>
+      </div>
+
+      <div class="preview-row">
+        <span class="dot blue"></span>
+        <strong>6 v obdelavi</strong>
+      </div>
+
+      <div class="preview-row">
+        <span class="dot orange"></span>
+        <strong>3 čakajo na podpis</strong>
+      </div>
+    </div>
+  </section>
+</main>

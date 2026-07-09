@@ -1,0 +1,36 @@
+<section class="dashboard-page">
+  <header class="page-header">
+    <div>
+      <p>Nadzorna plošča</p>
+      <h1>Pregled skladišča</h1>
+
+      @if (user()) {
+        <span>
+          Prijavljeni ste kot {{ user()?.name }} {{ user()?.surname }}
+        </span>
+      }
+    </div>
+  </header>
+
+  <section class="cards">
+    <article>
+      <span>Današnja naročila</span>
+      <strong>18</strong>
+    </article>
+
+    <article>
+      <span>V obdelavi</span>
+      <strong>6</strong>
+    </article>
+
+    <article>
+      <span>Čaka na podpis</span>
+      <strong>3</strong>
+    </article>
+
+    <article>
+      <span>Nizka zaloga</span>
+      <strong>4</strong>
+    </article>
+  </section>
+</section>

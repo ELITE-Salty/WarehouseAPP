@@ -1,0 +1,72 @@
+<div class="app-shell" [class.sidebar-collapsed]="sidebarCollapsed()">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">W</div>
+
+      @if (!sidebarCollapsed()) {
+        <div class="brand-text">
+          <strong>{{ t('common.appName') }}</strong>
+          <span>{{ primaryRoleLabel() }}</span>
+        </div>
+      }
+    </div>
+
+    <button class="collapse-button" type="button" (click)="toggleSidebar()">
+      @if (sidebarCollapsed()) {
+        →
+      } @else {
+        ←
+      }
+    </button>
+
+    <nav class="nav">
+      @for (item of visibleNavItems(); track item.path) {
+        <a
+          [routerLink]="item.path"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+          [title]="t(item.labelKey)"
+        >
+          <span class="nav-icon">{{ t(item.labelKey).charAt(0) }}</span>
+
+          @if (!sidebarCollapsed()) {
+            <span class="nav-label">{{ t(item.labelKey) }}</span>
+          }
+        </a>
+      }
+    </nav>
+  </aside>
+
+  <main class="main-area">
+    <header class="topbar">
+      <div class="user-summary">
+        @if (user()) {
+          <strong>{{ user()?.name }} {{ user()?.surname }}</strong>
+          <span>{{ user()?.email }}</span>
+        }
+      </div>
+
+      <div class="topbar-actions">
+        <button type="button" (click)="toggleLanguage()">
+          {{ languageButtonLabel() }}
+        </button>
+
+        <button type="button" (click)="toggleTheme()">
+          @if (theme() === 'dark') {
+            {{ t('common.lightMode') }}
+          } @else {
+            {{ t('common.darkMode') }}
+          }
+        </button>
+
+        <button type="button" (click)="logout()">
+          {{ t('common.logout') }}
+        </button>
+      </div>
+    </header>
+
+    <section class="page-content">
+      <router-outlet />
+    </section>
+  </main>
+</div>
