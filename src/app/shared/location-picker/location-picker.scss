@@ -168,15 +168,9 @@
   background: var(--surface-soft);
 }
 
-.location-picker.map-wide .map {
-  height: 320px;
-}
-
+.location-picker.map-wide .map,
 .location-picker.map-square .map {
-  aspect-ratio: 1 / 1;
-  height: auto;
-  min-height: 360px;
-  max-height: 520px;
+  height: var(--location-picker-map-height, 320px);
 }
 
 @media (max-width: 1000px) {

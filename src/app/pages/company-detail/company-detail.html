@@ -117,7 +117,7 @@
           <div>
             <h2>Lokacija podjetja</h2>
             <p class="muted">
-              Poiščite lokacijo prek Geoapify ali interne baze in jo shranite na podjetje.
+              Poiščite lokacijo prek Geoapify ali interne baze, nato jo shranite na podjetje.
             </p>
           </div>
         </div>
@@ -150,16 +150,48 @@
               </article>
             }
 
-            <app-location-picker
-              label="Poišči novo lokacijo"
-              country="si"
-              layout="stacked"
-              mapShape="wide"
-              [includeOnline]="true"
-              [limit]="6"
-              [initialLocation]="companyLocationValue()"
-              (locationSelected)="onLocationSelected($event)"
-            />
+            <div class="location-search-card">
+              <app-location-picker
+                label="Poišči novo lokacijo"
+                country="si"
+                layout="split"
+                mapShape="wide"
+                mapHeight="360px"
+                mapMinHeight="360px"
+                [includeOnline]="true"
+                [limit]="6"
+                [initialLocation]="pendingLocation() || companyLocationValue()"
+                (locationSelected)="onLocationSelected($event)"
+              />
+
+              @if (pendingLocation()) {
+                <article class="pending-location-card">
+                  <span>Izbrana nova lokacija</span>
+                  <strong>{{ pendingLocation()?.name || pendingLocation()?.street }}</strong>
+                  <p>{{ pendingLocationLabel() }}</p>
+
+                  @if (pendingLocation()?.lat && pendingLocation()?.lng) {
+                    <small>
+                      {{ pendingLocation()?.lat }},
+                      {{ pendingLocation()?.lng }}
+                    </small>
+                  }
+
+                  <button
+                    class="primary-button"
+                    type="button"
+                    (click)="savePendingLocation()"
+                    [disabled]="saving()"
+                  >
+                    @if (saving()) {
+                      Shranjevanje ...
+                    } @else {
+                      Shrani lokacijo
+                    }
+                  </button>
+                </article>
+              }
+            </div>
           </div>
         </div>
       </section>

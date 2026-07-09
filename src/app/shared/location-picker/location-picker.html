@@ -51,6 +51,11 @@
   </div>
 
   <div class="picker-right">
-    <div #mapContainer class="map"></div>
+    <div
+      #mapContainer
+      class="map"
+      [style.height]="mapHeight"
+      [style.min-height]="mapMinHeight"
+    ></div>
   </div>
 </section>

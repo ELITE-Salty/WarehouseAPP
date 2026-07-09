@@ -43,6 +43,7 @@ export class CompanyDetail {
   readonly loading = signal(false);
   readonly saving = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly pendingLocation = signal<LocationValue | null>(null);
 
   readonly companyKinds: CompanyKind[] = [
     'WAREHOUSE',
@@ -110,6 +111,17 @@ export class CompanyDetail {
   }
 
   onLocationSelected(location: LocationValue): void {
+    this.pendingLocation.set(location);
+  }
+
+  savePendingLocation(): void {
+    const location = this.pendingLocation();
+
+    if (!location) {
+      this.toastService.error('Najprej izberite lokacijo.');
+      return;
+    }
+
     this.saving.set(true);
 
     this.companiesService
@@ -128,6 +140,7 @@ export class CompanyDetail {
       .subscribe({
         next: () => {
           this.toastService.success('Lokacija je bila posodobljena.');
+          this.pendingLocation.set(null);
           this.loadCompany();
         },
         error: (error) => {
@@ -135,6 +148,24 @@ export class CompanyDetail {
           this.toastService.error(this.extractErrorMessage(error));
         },
       });
+  }
+
+  pendingLocationLabel(): string {
+    const location = this.pendingLocation();
+
+    if (!location) {
+      return '';
+    }
+
+    return [
+      location.name,
+      location.street,
+      location.postCode,
+      location.city,
+      location.country,
+    ]
+      .filter(Boolean)
+      .join(', ');
   }
 
   companyLocationValue(): LocationValue | null {

@@ -4,8 +4,10 @@ import {
   ElementRef,
   EventEmitter,
   Input,
+  OnChanges,
   OnDestroy,
   Output,
+  SimpleChanges,
   ViewChild,
   inject,
   signal,
@@ -29,7 +31,7 @@ import markerShadow from 'leaflet/dist/images/marker-shadow.png';
   templateUrl: './location-picker.html',
   styleUrl: './location-picker.scss',
 })
-export class LocationPicker implements AfterViewInit, OnDestroy {
+export class LocationPicker implements AfterViewInit, OnChanges, OnDestroy {
   private readonly locationsService = inject(LocationsService);
 
   @ViewChild('mapContainer') mapContainer?: ElementRef<HTMLDivElement>;
@@ -41,6 +43,8 @@ export class LocationPicker implements AfterViewInit, OnDestroy {
   @Input() initialLocation: LocationValue | null = null;
   @Input() layout: 'split' | 'stacked' = 'split';
   @Input() mapShape: 'wide' | 'square' = 'wide';
+  @Input() mapHeight = '320px';
+  @Input() mapMinHeight = '320px';
 
 
   @Output() locationSelected = new EventEmitter<LocationValue>();
@@ -51,6 +55,7 @@ export class LocationPicker implements AfterViewInit, OnDestroy {
   readonly suggestions = signal<LocationSuggestion[]>([]);
   readonly selectedLocation = signal<LocationValue | null>(null);
   readonly errorMessage = signal<string | null>(null);
+  private resizeObserver?: ResizeObserver;
 
   private searchTimeout: number | undefined;
   private map?: L.Map;
@@ -68,22 +73,21 @@ export class LocationPicker implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.initMap();
+    this.observeMapResize();
 
     if (this.initialLocation) {
       this.selectLocation(this.initialLocation, false);
     }
 
-    window.setTimeout(() => {
-      this.map?.invalidateSize();
-    }, 300);
+    this.refreshMap();
+  }
 
-    window.setTimeout(() => {
-      this.map?.invalidateSize();
-    }, 800);
-    
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['initialLocation'] && this.initialLocation && this.map) {
+      this.selectLocation(this.initialLocation, false);
+    }
 
     this.refreshMap();
-
   }
 
   ngOnDestroy(): void {
@@ -92,17 +96,33 @@ export class LocationPicker implements AfterViewInit, OnDestroy {
   }
 
   refreshMap(): void {
-    window.setTimeout(() => {
+    window.requestAnimationFrame(() => {
       this.map?.invalidateSize();
-    }, 50);
+    });
 
     window.setTimeout(() => {
       this.map?.invalidateSize();
-    }, 250);
+    }, 100);
 
     window.setTimeout(() => {
       this.map?.invalidateSize();
-    }, 600);
+    }, 350);
+
+    window.setTimeout(() => {
+      this.map?.invalidateSize();
+    }, 800);
+  }
+
+  private observeMapResize(): void {
+    if (!this.mapContainer?.nativeElement) {
+      return;
+    }
+
+    this.resizeObserver = new ResizeObserver(() => {
+      this.refreshMap();
+    });
+
+    this.resizeObserver.observe(this.mapContainer.nativeElement);
   }
 
   get layoutClass(): string {
@@ -247,8 +267,9 @@ export class LocationPicker implements AfterViewInit, OnDestroy {
       this.marker.setLatLng(latLng);
     }
 
-    this.marker.bindPopup(this.formatLocation(location));
-    this.map.setView(latLng, 15);
+  this.marker.bindPopup(this.formatLocation(location));
+  this.map.setView(latLng, 15);
+  this.refreshMap();
 
     window.setTimeout(() => {
       this.map?.invalidateSize();
