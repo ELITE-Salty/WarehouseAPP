@@ -1,0 +1,9 @@
+<div class="toast-stack">
+  @for (toast of toastService.toasts(); track toast.id) {
+    <article class="toast" [class]="'toast-' + toast.type">
+      <span>{{ toast.message }}</span>
+
+      <button type="button" (click)="toastService.remove(toast.id)">×</button>
+    </article>
+  }
+</div>

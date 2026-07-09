@@ -13,18 +13,6 @@
     }
   </header>
 
-  @if (errorMessage()) {
-    <div class="alert alert-error">
-      {{ errorMessage() }}
-    </div>
-  }
-
-  @if (successMessage()) {
-    <div class="alert alert-success">
-      {{ successMessage() }}
-    </div>
-  }
-
   @if (createdTemporaryPassword()) {
     <div class="temporary-password-box">
       <strong>Začasno geslo:</strong>
@@ -53,8 +41,8 @@
         >
           <option value="all">Vse vloge</option>
 
-          @for (role of roles(); track role) {
-            <option [value]="role">{{ roleLabel(role.code) }}</option>
+          @for (role of roles(); track role.code) {
+            <option [value]="role.code">{{ roleLabel(role.code) }}</option>
           }
         </select>
       </label>
@@ -232,7 +220,13 @@
         </header>
 
         <form class="user-form" (ngSubmit)="saveModal()">
-          <label>
+          @if (errorMessage()) {
+            <div class="modal-alert">
+              {{ errorMessage() }}
+            </div>
+          }
+
+          <label [class.invalid-field]="fieldError('username')">
             <span>Uporabniško ime *</span>
             <input
               type="text"
@@ -240,29 +234,13 @@
               [ngModel]="form().username"
               (ngModelChange)="patchForm({ username: $event })"
             />
+
+            @if (fieldError('username')) {
+              <small>{{ fieldError('username') }}</small>
+            }
           </label>
 
-          <label>
-            <span>Ime *</span>
-            <input
-              type="text"
-              name="name"
-              [ngModel]="form().name"
-              (ngModelChange)="patchForm({ name: $event })"
-            />
-          </label>
-
-          <label>
-            <span>Priimek *</span>
-            <input
-              type="text"
-              name="surname"
-              [ngModel]="form().surname"
-              (ngModelChange)="patchForm({ surname: $event })"
-            />
-          </label>
-
-          <label>
+          <label [class.invalid-field]="fieldError('email')">
             <span>E-pošta *</span>
             <input
               type="email"
@@ -270,20 +248,55 @@
               [ngModel]="form().email"
               (ngModelChange)="patchForm({ email: $event })"
             />
+
+            @if (fieldError('email')) {
+              <small>{{ fieldError('email') }}</small>
+            }
           </label>
 
-            <label>
-              <span>Vloga *</span>
-              <select
-                name="roleCode"
-                [ngModel]="form().roleCode"
-                (ngModelChange)="patchForm({ roleCode: $event })"
-              >
-                @for (role of roles(); track role.code) {
-                  <option [value]="role.code">{{ roleLabel(role.code) }}</option>
-                }
-              </select>
+          <label [class.invalid-field]="fieldError('name')">
+            <span>Ime *</span>
+            <input
+              type="text"
+              name="name"
+              [ngModel]="form().name"
+              (ngModelChange)="patchForm({ name: $event })"
+            />
 
+            @if (fieldError('name')) {
+              <small>{{ fieldError('name') }}</small>
+            }
+          </label>
+
+          <label [class.invalid-field]="fieldError('surname')">
+            <span>Priimek *</span>
+            <input
+              type="text"
+              name="surname"
+              [ngModel]="form().surname"
+              (ngModelChange)="patchForm({ surname: $event })"
+            />
+
+            @if (fieldError('surname')) {
+              <small>{{ fieldError('surname') }}</small>
+            }
+          </label>
+
+          <label [class.invalid-field]="fieldError('roleCode')">
+            <span>Vloga *</span>
+            <select
+              name="roleCode"
+              [ngModel]="form().roleCode"
+              (ngModelChange)="patchForm({ roleCode: $event })"
+            >
+              @for (role of roles(); track role.code) {
+                <option [value]="role.code">{{ roleLabel(role.code) }}</option>
+              }
+            </select>
+
+            @if (fieldError('roleCode')) {
+              <small>{{ fieldError('roleCode') }}</small>
+            }
 
             @if (roles().length === 0) {
               <small class="field-warning">
@@ -293,7 +306,7 @@
           </label>
 
           @if (form().roleCode !== 'GLOBAL_ADMIN') {
-            <label>
+            <label [class.invalid-field]="fieldError('companyId')">
               <span>Podjetje *</span>
               <select
                 name="companyId"
@@ -308,6 +321,10 @@
                   </option>
                 }
               </select>
+
+              @if (fieldError('companyId')) {
+                <small>{{ fieldError('companyId') }}</small>
+              }
 
               @if (companies().length === 0) {
                 <small class="field-warning">
@@ -329,7 +346,7 @@
               />
             </label>
 
-            <label class="checkbox-label">
+            <label class="checkbox-label field-full">
               <input
                 type="checkbox"
                 name="sendVerificationEmail"
@@ -341,7 +358,7 @@
           }
 
           @if (modalMode() === 'edit') {
-            <label class="checkbox-label">
+            <label class="checkbox-label field-full">
               <input
                 type="checkbox"
                 name="emailConfirmed"

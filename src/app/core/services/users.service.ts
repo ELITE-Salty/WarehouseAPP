@@ -2,10 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { map } from 'rxjs';
 import { APP_CONFIG } from '../config/app-config';
-import {
-  ApiListResponse,
-  ApiSuccessResponse,
-} from '../models/api-response.models';
+import { ApiListResponse, ApiSuccessResponse } from '../models/api-response.models';
 import {
   CreateUserRequest,
   CreateUserResponse,
@@ -27,31 +24,25 @@ export class UsersService {
   }
 
   getCreateOptions() {
-    return this.http.get<UserCreateOptions | { data: UserCreateOptions }>(
-      `${this.baseUrl}/create-options`,
-    ).pipe(
-      map((response) => {
-        if ('data' in response) {
-          return response.data;
-        }
+    return this.http
+      .get<UserCreateOptions | { data: UserCreateOptions }>(`${this.baseUrl}/create-options`)
+      .pipe(
+        map((response) => {
+          if ('data' in response) {
+            return response.data;
+          }
 
-        return response;
-      }),
-    );
+          return response;
+        }),
+      );
   }
 
   createUser(payload: CreateUserRequest) {
-    return this.http.post<ApiSuccessResponse<CreateUserResponse>>(
-      this.baseUrl,
-      payload,
-    );
+    return this.http.post<ApiSuccessResponse<CreateUserResponse>>(this.baseUrl, payload);
   }
 
   updateUser(userId: string, payload: UpdateUserRequest) {
-    return this.http.patch<ApiSuccessResponse<UserListItem>>(
-      `${this.baseUrl}/${userId}`,
-      payload,
-    );
+    return this.http.patch<ApiSuccessResponse<UserListItem>>(`${this.baseUrl}/${userId}`, payload);
   }
 
   updateUserRole(userId: string, payload: UpdateUserRoleRequest) {
@@ -62,10 +53,7 @@ export class UsersService {
   }
 
   setUserActive(userId: string, active: boolean) {
-    return this.http.patch<ApiSuccessResponse>(
-      `${this.baseUrl}/${userId}/active`,
-      { active },
-    );
+    return this.http.patch<ApiSuccessResponse>(`${this.baseUrl}/${userId}/active`, { active });
   }
 
   deleteUser(userId: string) {
@@ -73,9 +61,6 @@ export class UsersService {
   }
 
   resendVerification(userId: string) {
-    return this.http.post<ApiSuccessResponse>(
-      `${this.baseUrl}/${userId}/resend-verification`,
-      {},
-    );
+    return this.http.post<ApiSuccessResponse>(`${this.baseUrl}/${userId}/resend-verification`, {});
   }
 }

@@ -19,7 +19,9 @@
   padding: 20px;
   border-right: 1px solid var(--border);
   background: var(--surface);
-  transition: width 180ms ease, padding 180ms ease;
+  transition:
+    width 180ms ease,
+    padding 180ms ease;
 }
 
 .sidebar-collapsed .sidebar {
@@ -113,6 +115,14 @@
   background: var(--surface-soft);
   font-size: 13px;
   font-weight: 900;
+}
+
+.nav-icon mat-icon,
+.collapse-button mat-icon {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+  line-height: 20px;
 }
 
 .nav-label {

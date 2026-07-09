@@ -12,11 +12,13 @@
     </div>
 
     <button class="collapse-button" type="button" (click)="toggleSidebar()">
-      @if (sidebarCollapsed()) {
-        →
-      } @else {
-        ←
-      }
+      <mat-icon>
+        @if (sidebarCollapsed()) {
+          keyboard_double_arrow_right
+        } @else {
+          keyboard_double_arrow_left
+        }
+      </mat-icon>
     </button>
 
     <nav class="nav">
@@ -27,7 +29,9 @@
           [routerLinkActiveOptions]="{ exact: true }"
           [title]="t(item.labelKey)"
         >
-          <span class="nav-icon">{{ t(item.labelKey).charAt(0) }}</span>
+          <span class="nav-icon">
+            <mat-icon>{{ item.icon }}</mat-icon>
+          </span>
 
           @if (!sidebarCollapsed()) {
             <span class="nav-label">{{ t(item.labelKey) }}</span>
@@ -69,4 +73,6 @@
       <router-outlet />
     </section>
   </main>
+
+  <app-toast-outlet />
 </div>

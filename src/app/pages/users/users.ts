@@ -13,6 +13,7 @@ import {
 import { AuthService } from '../../core/services/auth.service';
 import { UsersService } from '../../core/services/users.service';
 import { I18nService } from '../../core/i18n/i18n.service';
+import { ToastService } from '../../core/services/toast.service';
 
 type UserModalMode = 'create' | 'edit';
 type ActiveFilter = 'all' | 'active' | 'inactive' | 'unconfirmed';
@@ -41,7 +42,9 @@ export class UsersComponent {
   private readonly usersService = inject(UsersService);
   private readonly authService = inject(AuthService);
   private readonly i18n = inject(I18nService);
+  private readonly toastService = inject(ToastService);
 
+  readonly fieldErrors = signal<Record<string, string>>({});
   readonly users = signal<UserListItem[]>([]);
   readonly companies = signal<UserCreateCompanyOption[]>([]);
   readonly roles = signal<Role[]>([]);
@@ -82,7 +85,7 @@ export class UsersComponent {
     const activeFilter = this.activeFilter();
 
     return this.users().filter((user) => {
-      const primaryRole = this.primaryRole(user);
+      const primaryRole = this.normalizeRoleCode(this.primaryRole(user));
       const companyId = user.roles?.[0]?.companyId ?? null;
 
       const matchesSearch =
@@ -93,11 +96,9 @@ export class UsersComponent {
         this.roleLabel(primaryRole).toLowerCase().includes(search) ||
         this.companyLabel(user).toLowerCase().includes(search);
 
-      const matchesRole =
-        roleFilter === 'all' || primaryRole === roleFilter;
+      const matchesRole = roleFilter === 'all' || primaryRole === roleFilter;
 
-      const matchesCompany =
-        companyFilter === 'all' || companyId === companyFilter;
+      const matchesCompany = companyFilter === 'all' || companyId === companyFilter;
 
       const matchesActive =
         activeFilter === 'all' ||
@@ -130,6 +131,35 @@ export class UsersComponent {
   readonly showingTo = computed(() => {
     return Math.min(this.page() * this.pageSize(), this.filteredUsers().length);
   });
+
+  fieldError(field: string): string | null {
+    return this.fieldErrors()[field] ?? null;
+  }
+
+  private setFieldErrors(errors: Record<string, string>): void {
+    this.fieldErrors.set(errors);
+  }
+
+  private clearFieldErrors(): void {
+    this.fieldErrors.set({});
+  }
+
+  private normalizeRoleCode(value: unknown): RoleCode {
+    if (typeof value === 'string') {
+      return value as RoleCode;
+    }
+
+    if (
+      typeof value === 'object' &&
+      value !== null &&
+      'code' in value &&
+      typeof (value as any).code === 'string'
+    ) {
+      return (value as any).code as RoleCode;
+    }
+
+    return 'COMPANY_USER';
+  }
 
   constructor() {
     this.loadPage();
@@ -173,6 +203,7 @@ export class UsersComponent {
 
   openCreateModal(): void {
     this.clearMessages();
+    this.clearFieldErrors();
     this.modalMode.set('create');
     this.form.set(this.emptyForm());
     this.modalOpen.set(true);
@@ -184,6 +215,7 @@ export class UsersComponent {
 
   openEditModal(user: UserListItem): void {
     this.clearMessages();
+    this.clearFieldErrors();
     this.modalMode.set('edit');
 
     const role = user.roles?.[0];
@@ -208,7 +240,7 @@ export class UsersComponent {
     if (this.saving()) {
       return;
     }
-
+    this.clearFieldErrors();
     this.modalOpen.set(false);
   }
 
@@ -225,6 +257,24 @@ export class UsersComponent {
 
       return next;
     });
+
+    const changedFields = Object.keys(value);
+
+    if (changedFields.length > 0) {
+      this.fieldErrors.update((errors) => {
+        const next = { ...errors };
+
+        for (const field of changedFields) {
+          delete next[field];
+        }
+
+        if ('roleCode' in value) {
+          delete next['companyId'];
+        }
+
+        return next;
+      });
+    }
   }
 
   saveModal(): void {
@@ -266,7 +316,7 @@ export class UsersComponent {
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: (response) => {
-          this.successMessage.set(response.message ?? 'Uporabnik je bil ustvarjen.');
+          this.toastService.success(response.message ?? 'Uporabnik je bil ustvarjen.');
 
           if (response.data?.temporaryPassword) {
             this.createdTemporaryPassword.set(response.data.temporaryPassword);
@@ -277,7 +327,9 @@ export class UsersComponent {
         },
         error: (error) => {
           console.error(error);
-          this.errorMessage.set(this.extractErrorMessage(error));
+          const message = error.error.message[0];
+          this.errorMessage.set(message);
+          // this.toastService.error(message);
         },
       });
   }
@@ -313,13 +365,15 @@ export class UsersComponent {
       .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
         next: () => {
-          this.successMessage.set('Uporabnik je bil posodobljen.');
+          this.toastService.success('Uporabnik je bil posodobljen.');
           this.modalOpen.set(false);
           this.loadPage();
         },
         error: (error) => {
           console.error(error);
-          this.errorMessage.set(this.extractErrorMessage(error));
+          const message = error.error.message[0];
+          this.errorMessage.set(message);
+          // this.toastService.error(message);
         },
       });
   }
@@ -329,12 +383,14 @@ export class UsersComponent {
 
     this.usersService.setUserActive(user.id, active).subscribe({
       next: (response) => {
-        this.successMessage.set(response.message ?? 'Uporabnik je bil posodobljen.');
+        this.toastService.success(response.message ?? 'Uporabnik je bil posodobljen.');
         this.loadPage();
       },
       error: (error) => {
         console.error(error);
-        this.errorMessage.set(this.extractErrorMessage(error));
+        const message = this.extractErrorMessage(error);
+        this.errorMessage.set(message);
+        // this.toastService.error(message);
       },
     });
   }
@@ -342,9 +398,7 @@ export class UsersComponent {
   deleteUser(user: UserListItem): void {
     this.clearMessages();
 
-    const confirmed = window.confirm(
-      `Ali res želite izbrisati uporabnika ${user.email}?`,
-    );
+    const confirmed = window.confirm(`Ali res želite izbrisati uporabnika ${user.email}?`);
 
     if (!confirmed) {
       return;
@@ -352,12 +406,14 @@ export class UsersComponent {
 
     this.usersService.deleteUser(user.id).subscribe({
       next: (response) => {
-        this.successMessage.set(response.message ?? 'Uporabnik je bil izbrisan.');
+        this.toastService.success(response.message ?? 'Uporabnik je bil izbrisan.');
         this.loadPage();
       },
       error: (error) => {
         console.error(error);
-        this.errorMessage.set(this.extractErrorMessage(error));
+        const message = this.extractErrorMessage(error);
+        this.errorMessage.set(message);
+        // this.toastService.error(message);
       },
     });
   }
@@ -367,13 +423,13 @@ export class UsersComponent {
 
     this.usersService.resendVerification(user.id).subscribe({
       next: (response) => {
-        this.successMessage.set(
-          response.message ?? 'Verifikacijska e-pošta je bila poslana.',
-        );
+        this.toastService.success(response.message ?? 'Verifikacijska e-pošta je bila poslana.');
       },
       error: (error) => {
         console.error(error);
-        this.errorMessage.set(this.extractErrorMessage(error));
+        const message = error.error.message[0];
+        this.errorMessage.set(message);
+        // this.toastService.error(message);
       },
     });
   }
@@ -384,7 +440,7 @@ export class UsersComponent {
   }
 
   updateRoleFilter(value: 'all' | RoleCode): void {
-    this.roleFilter.set(value);
+    this.roleFilter.set(value === 'all' ? 'all' : this.normalizeRoleCode(value));
     this.page.set(1);
   }
 
@@ -424,7 +480,7 @@ export class UsersComponent {
   }
 
   primaryRole(user: UserListItem): RoleCode {
-    return user.roles?.[0]?.roleCode ?? 'COMPANY_USER';
+    return this.normalizeRoleCode(user.roles?.[0]?.roleCode);
   }
 
   companyLabel(user: UserListItem): string {
@@ -432,18 +488,36 @@ export class UsersComponent {
   }
 
   private validateForm(form: UserFormModel): boolean {
-    if (!form.username || !form.name || !form.surname || !form.email) {
-      this.errorMessage.set('Izpolnite obvezna polja.');
-      return false;
+    const errors: Record<string, string> = {};
+
+    if (!form.username.trim()) {
+      errors['username'] = 'Uporabniško ime je obvezno.';
+    }
+
+    if (!form.name.trim()) {
+      errors['name'] = 'Ime je obvezno.';
+    }
+
+    if (!form.surname.trim()) {
+      errors['surname'] = 'Priimek je obvezen.';
+    }
+
+    if (!form.email.trim()) {
+      errors['email'] = 'E-pošta je obvezna.';
     }
 
     if (!form.roleCode) {
-      this.errorMessage.set('Izberite vlogo.');
-      return false;
+      errors['roleCode'] = 'Vloga je obvezna.';
     }
 
     if (form.roleCode !== 'GLOBAL_ADMIN' && !form.companyId) {
-      this.errorMessage.set('Izberite podjetje za uporabnika.');
+      errors['companyId'] = 'Podjetje je obvezno.';
+    }
+
+    this.setFieldErrors(errors);
+
+    if (Object.keys(errors).length > 0) {
+      this.errorMessage.set('Preverite označena polja.');
       return false;
     }
 
@@ -468,6 +542,7 @@ export class UsersComponent {
     this.errorMessage.set(null);
     this.successMessage.set(null);
     this.createdTemporaryPassword.set(null);
+    this.clearFieldErrors();
   }
 
   private extractErrorMessage(error: unknown): string {

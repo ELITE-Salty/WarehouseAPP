@@ -3,12 +3,7 @@ import { Injectable, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { APP_CONFIG } from '../config/app-config';
-import {
-  AuthSession,
-  LoginRequest,
-  LoginResponse,
-  RoleCode,
-} from '../models/auth.models';
+import { AuthSession, LoginRequest, LoginResponse, RoleCode } from '../models/auth.models';
 import { TokenStorageService } from './token-storage.service';
 
 @Injectable({
@@ -50,19 +45,17 @@ export class AuthService {
   });
 
   login(payload: LoginRequest): Observable<LoginResponse> {
-    return this.http
-      .post<LoginResponse>(`${APP_CONFIG.apiBaseUrl}/auth/login`, payload)
-      .pipe(
-        tap((response) => {
-          const session: AuthSession = {
-            accessToken: response.accessToken,
-            refreshToken: response.refreshToken,
-            user: response.user,
-          };
+    return this.http.post<LoginResponse>(`${APP_CONFIG.apiBaseUrl}/auth/login`, payload).pipe(
+      tap((response) => {
+        const session: AuthSession = {
+          accessToken: response.accessToken,
+          refreshToken: response.refreshToken,
+          user: response.user,
+        };
 
-          this.tokenStorage.saveSession(session);
-        }),
-      );
+        this.tokenStorage.saveSession(session);
+      }),
+    );
   }
 
   refreshSession(): Observable<LoginResponse> {
@@ -78,10 +71,7 @@ export class AuthService {
       })
       .pipe(
         tap((response) => {
-          this.tokenStorage.updateTokens(
-            response.accessToken,
-            response.refreshToken,
-          );
+          this.tokenStorage.updateTokens(response.accessToken, response.refreshToken);
 
           this.tokenStorage.updateUser(response.user);
         }),
@@ -92,12 +82,10 @@ export class AuthService {
     const refreshToken = this.tokenStorage.getRefreshToken();
 
     if (refreshToken) {
-      this.http
-        .post(`${APP_CONFIG.apiBaseUrl}/auth/logout`, { refreshToken })
-        .subscribe({
-          next: () => this.forceLogout(),
-          error: () => this.forceLogout(),
-        });
+      this.http.post(`${APP_CONFIG.apiBaseUrl}/auth/logout`, { refreshToken }).subscribe({
+        next: () => this.forceLogout(),
+        error: () => this.forceLogout(),
+      });
 
       return;
     }
