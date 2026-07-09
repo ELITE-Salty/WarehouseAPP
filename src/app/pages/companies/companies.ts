@@ -94,9 +94,9 @@ export class Companies {
       const matchesSearch =
         !search ||
         (company.name ?? '').toLowerCase().includes(search) ||
-        (company.legalName ?? '').toLowerCase().includes(search) ||
-        (company.shortName ?? '').toLowerCase().includes(search) ||
-        (company.vatNumber ?? '').toLowerCase().includes(search) ||
+        (this.companyLegalName(company) ?? '').toLowerCase().includes(search) ||
+        (this.companyShortName(company) ?? '').toLowerCase().includes(search) ||
+        (this.companyVatNumber(company) ?? '').toLowerCase().includes(search) ||
         (company.email ?? '').toLowerCase().includes(search) ||
         (company.phone ?? '').toLowerCase().includes(search) ||
         locationText.toLowerCase().includes(search);
@@ -524,4 +524,29 @@ export class Companies {
 
     return 'Prišlo je do napake.';
   }
+
+  companyLegalName(company: CompanyItem): string | null {
+    return company.legalName ?? company.legal_name ?? null;
+  }
+
+  companyShortName(company: CompanyItem): string | null {
+    return company.shortName ?? company.short_name ?? null;
+  }
+
+  companyVatNumber(company: CompanyItem): string | null {
+    return company.vatNumber ?? company.vat_number ?? null;
+  }
+
+  companyRegistrationNumber(company: CompanyItem): string | null {
+    return company.registrationNumber ?? company.registration_number ?? null;
+  }
+
+  companyEoriNumber(company: CompanyItem): string | null {
+    return company.eoriNumber ?? company.eori_number ?? null;
+  }
+
+  companyBankName(company: CompanyItem): string | null {
+    return company.bankName ?? company.bank_name ?? null;
+  }
+
 }

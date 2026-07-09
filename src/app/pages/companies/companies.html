@@ -75,17 +75,18 @@
         <div class="table-row">
           <div class="company-cell">
             <strong>{{ company.name || '-' }}</strong>
-            @if (company.legalName) {
-              <span>{{ company.legalName }}</span>
-            }
-            @if (company.vatNumber) {
-              <small>DDV: {{ company.vatNumber }}</small>
-            }
+              @if (companyLegalName(company)) {
+                <span>{{ companyLegalName(company) }}</span>
+              }
+
+              @if (companyVatNumber(company)) {
+                <small>DDV: {{ companyVatNumber(company) }}</small>
+              }
           </div>
 
           <div>
             <span class="kind-pill" [class]="companyKindClass(company)">
-              {{ companyKindLabel(company.companyKind) }}
+              {{ companyKindLabel(safeCompanyKind(company)) }}
             </span>
           </div>
 
