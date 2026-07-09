@@ -1,0 +1,56 @@
+<section class="location-picker" [class]="layoutClass">
+  <div class="picker-left">
+    <div class="picker-field">
+      <label>
+        <span>{{ label }}</span>
+        <input
+          type="search"
+          [ngModel]="query()"
+          (ngModelChange)="search($event)"
+          placeholder="Poišči naslov, podjetje ali kraj ..."
+        />
+      </label>
+
+      @if (loading()) {
+        <small class="hint">Iskanje lokacij ...</small>
+      }
+
+      @if (errorMessage()) {
+        <small class="error">{{ errorMessage() }}</small>
+      }
+
+      @if (suggestions().length > 0) {
+        <div class="suggestions">
+          @for (suggestion of suggestions(); track suggestion.formatted || suggestion.id || suggestion.placeId) {
+            <button type="button" (click)="chooseSuggestion(suggestion)">
+              <strong>{{ suggestion.name || suggestion.street || suggestion.city }}</strong>
+              <span>{{ suggestionLabel(suggestion) }}</span>
+              <small>{{ sourceLabel(suggestion.source) }}</small>
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    @if (selectedLocation()) {
+      <article class="selected-card">
+        <div>
+          <strong>{{ selectedLocation()?.name || selectedLocation()?.street }}</strong>
+          <span>{{ selectedLocation() ? formatLocation(selectedLocation()!) : '' }}</span>
+
+          @if (selectedLocation()?.lat && selectedLocation()?.lng) {
+            <small>
+              {{ selectedLocation()?.lat }}, {{ selectedLocation()?.lng }}
+            </small>
+          }
+        </div>
+
+        <button type="button" (click)="clearSelection()">Počisti</button>
+      </article>
+    }
+  </div>
+
+  <div class="picker-right">
+    <div #mapContainer class="map"></div>
+  </div>
+</section>

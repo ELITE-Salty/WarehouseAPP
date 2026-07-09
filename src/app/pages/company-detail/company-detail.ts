@@ -10,6 +10,8 @@ import {
 } from '../../core/models/company.models';
 import { CompaniesService } from '../../core/services/companies.service';
 import { ToastService } from '../../core/services/toast.service';
+import { LocationPicker } from '../../shared/location-picker/location-picker';
+import { LocationValue } from '../../core/models/location.models';
 
 interface CompanyEditForm {
   name: string;
@@ -28,7 +30,7 @@ interface CompanyEditForm {
 @Component({
   selector: 'app-company-detail',
   standalone: true,
-  imports: [FormsModule, RouterLink, MatTabsModule],
+  imports: [FormsModule, RouterLink, MatTabsModule, LocationPicker],
   templateUrl: './company-detail.html',
   styleUrl: './company-detail.scss',
 })
@@ -105,6 +107,53 @@ export class CompanyDetail {
           this.errorMessage.set(this.extractErrorMessage(error));
         },
       });
+  }
+
+  onLocationSelected(location: LocationValue): void {
+    this.saving.set(true);
+
+    this.companiesService
+      .updateCompany(this.companyId, {
+        location: {
+          name: location.name ?? null,
+          street: location.street,
+          postCode: location.postCode,
+          city: location.city,
+          country: location.country,
+          lat: location.lat ?? null,
+          lng: location.lng ?? null,
+        },
+      })
+      .pipe(finalize(() => this.saving.set(false)))
+      .subscribe({
+        next: () => {
+          this.toastService.success('Lokacija je bila posodobljena.');
+          this.loadCompany();
+        },
+        error: (error) => {
+          console.error(error);
+          this.toastService.error(this.extractErrorMessage(error));
+        },
+      });
+  }
+
+  companyLocationValue(): LocationValue | null {
+    const location = this.company()?.location;
+
+    if (!location) {
+      return null;
+    }
+
+    return {
+      id: location.id,
+      name: location.name ?? null,
+      street: location.street,
+      postCode: location.postCode ?? location.post_code ?? '',
+      city: location.city,
+      country: location.country,
+      lat: location.lat ?? null,
+      lng: location.lng ?? null,
+    };
   }
 
   patchForm(value: Partial<CompanyEditForm>): void {

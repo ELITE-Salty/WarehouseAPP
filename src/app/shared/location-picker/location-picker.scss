@@ -1,0 +1,191 @@
+.location-picker {
+  display: grid;
+  gap: 16px;
+  align-items: start;
+}
+
+.location-picker.layout-split {
+  grid-template-columns: minmax(280px, 0.9fr) minmax(360px, 1fr);
+}
+
+.location-picker.layout-stacked {
+  grid-template-columns: 1fr;
+}
+
+.picker-left,
+.picker-right {
+  min-width: 0;
+}
+
+.picker-left {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.picker-right {
+  width: 100%;
+  min-width: 0;
+}
+
+.picker-field {
+  position: relative;
+
+  label {
+    display: grid;
+    gap: 8px;
+  }
+
+  label span {
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  input {
+    width: 100%;
+    height: 48px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 0 14px;
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+  }
+
+  input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-soft);
+  }
+}
+
+.hint {
+  display: block;
+  margin-top: 7px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.error {
+  display: block;
+  margin-top: 7px;
+  color: #991b1b;
+  font-weight: 800;
+}
+
+.suggestions {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 60;
+  max-height: 310px;
+  overflow: auto;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+
+  button {
+    width: 100%;
+    padding: 12px;
+    display: grid;
+    gap: 3px;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--text);
+    text-align: left;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: var(--surface-soft);
+  }
+
+  strong {
+    font-size: 14px;
+  }
+
+  span {
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  small {
+    width: fit-content;
+    margin-top: 3px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: var(--surface-soft);
+    color: var(--muted);
+    font-weight: 900;
+  }
+}
+
+.selected-card {
+  padding: 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-soft);
+
+  div {
+    display: grid;
+    gap: 4px;
+  }
+
+  span,
+  small {
+    color: var(--muted);
+  }
+
+  button {
+    height: 36px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text);
+    padding: 0 12px;
+    font-weight: 800;
+    cursor: pointer;
+  }
+}
+
+:root.dark-theme {
+  .error {
+    color: #fecaca;
+  }
+}
+
+.map {
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-soft);
+}
+
+.location-picker.map-wide .map {
+  height: 320px;
+}
+
+.location-picker.map-square .map {
+  aspect-ratio: 1 / 1;
+  height: auto;
+  min-height: 360px;
+  max-height: 520px;
+}
+
+@media (max-width: 1000px) {
+  .location-picker.layout-split {
+    grid-template-columns: 1fr;
+  }
+
+  .location-picker.map-square .map,
+  .location-picker.map-wide .map {
+    min-height: 300px;
+  }
+}

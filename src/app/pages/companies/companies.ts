@@ -10,6 +10,8 @@ import {
 } from '../../core/models/company.models';
 import { CompaniesService } from '../../core/services/companies.service';
 import { ToastService } from '../../core/services/toast.service';
+import { LocationPicker } from '../../shared/location-picker/location-picker';
+import { LocationValue } from '../../core/models/location.models';
 
 type ActiveFilter = 'all' | 'active' | 'inactive';
 type PageSize = 50 | 100 | 150 | 200 | 'all';
@@ -32,6 +34,8 @@ interface CompanyCreateForm {
   postCode: string;
   city: string;
   country: string;
+  lat: number | null;
+  lng: number | null;
 
   contactName: string;
   contactSurname: string;
@@ -45,7 +49,7 @@ interface CompanyCreateForm {
 @Component({
   selector: 'app-companies',
   standalone: true,
-  imports: [FormsModule, RouterLink, MatStepperModule],
+  imports: [FormsModule, RouterLink, MatStepperModule, LocationPicker],
   templateUrl: './companies.html',
   styleUrl: './companies.scss',
 })
@@ -461,6 +465,8 @@ export class Companies {
       postCode: form.postCode.trim(),
       city: form.city.trim(),
       country: form.country.trim(),
+      lat: form.lat,
+      lng: form.lng,
     };
   }
 
@@ -476,6 +482,30 @@ export class Companies {
   private optionalString(value: string): string | null {
     const clean = value.trim();
     return clean ? clean : null;
+  }
+
+  onLocationSelected(location: LocationValue): void {
+    this.patchForm({
+      locationName: location.name ?? '',
+      street: location.street,
+      postCode: location.postCode,
+      city: location.city,
+      country: location.country,
+      lat: location.lat ?? null,
+      lng: location.lng ?? null,
+    });
+  }
+
+  onLocationCleared(): void {
+    this.patchForm({
+      locationName: '',
+      street: '',
+      postCode: '',
+      city: '',
+      country: 'Slovenia',
+      lat: null,
+      lng: null,
+    });
   }
 
   private emptyForm(): CompanyCreateForm {
@@ -497,6 +527,9 @@ export class Companies {
       postCode: '',
       city: '',
       country: 'Slovenia',
+      lat: null,
+      lng: null,
+      
 
       contactName: '',
       contactSurname: '',

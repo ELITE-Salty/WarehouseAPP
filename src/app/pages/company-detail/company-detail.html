@@ -112,22 +112,56 @@
     </mat-tab>
 
     <mat-tab label="Lokacije">
-      <section class="tab-card">
-        <h2>Lokacija podjetja</h2>
-
-        @if (company()?.location) {
-          <div class="simple-row">
-            <strong>{{ company()?.location?.name || 'Naslov' }}</strong>
-            <span>
-              {{ company()?.location?.street }},
-              {{ company()?.location?.postCode }}
-              {{ company()?.location?.city }},
-              {{ company()?.location?.country }}
-            </span>
+      <section class="tab-card location-tab-card">
+        <div class="location-tab-header">
+          <div>
+            <h2>Lokacija podjetja</h2>
+            <p class="muted">
+              Poiščite lokacijo prek Geoapify ali interne baze in jo shranite na podjetje.
+            </p>
           </div>
-        } @else {
-          <p class="muted">Podjetje nima vpisane lokacije.</p>
-        }
+        </div>
+
+        <div class="location-detail-grid">
+          <div class="location-detail-left">
+            @if (company()?.location) {
+              <article class="current-location-card">
+                <span>Trenutna lokacija</span>
+                <strong>{{ company()?.location?.name || company()?.name }}</strong>
+                <p>
+                  {{ company()?.location?.street }},
+                  {{ companyLocationValue()?.postCode }}
+                  {{ company()?.location?.city }},
+                  {{ company()?.location?.country }}
+                </p>
+
+                @if (companyLocationValue()?.lat && companyLocationValue()?.lng) {
+                  <small>
+                    {{ companyLocationValue()?.lat }},
+                    {{ companyLocationValue()?.lng }}
+                  </small>
+                }
+              </article>
+            } @else {
+              <article class="current-location-card">
+                <span>Trenutna lokacija</span>
+                <strong>Ni vpisane lokacije</strong>
+                <p>Podjetje še nima shranjene lokacije.</p>
+              </article>
+            }
+
+            <app-location-picker
+              label="Poišči novo lokacijo"
+              country="si"
+              layout="stacked"
+              mapShape="wide"
+              [includeOnline]="true"
+              [limit]="6"
+              [initialLocation]="companyLocationValue()"
+              (locationSelected)="onLocationSelected($event)"
+            />
+          </div>
+        </div>
       </section>
     </mat-tab>
 

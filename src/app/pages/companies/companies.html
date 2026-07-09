@@ -235,6 +235,18 @@
 
           <mat-step label="Lokacija">
             <form class="company-form">
+
+              <div class="full-width">
+                <app-location-picker
+                  label="Poišči lokacijo"
+                  country="si"
+                  [includeOnline]="true"
+                  [limit]="6"
+                  (locationSelected)="onLocationSelected($event)"
+                  (locationCleared)="onLocationCleared()"
+                />
+              </div>
+
               <label>
                 <span>Naziv lokacije</span>
                 <input type="text" name="locationName" [ngModel]="form().locationName" (ngModelChange)="patchForm({ locationName: $event })" />
