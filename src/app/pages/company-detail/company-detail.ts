@@ -12,6 +12,7 @@ import {
   UpdateCompanyRequest,
 } from '../../core/models/company.models';
 import { CompaniesService } from '../../core/services/companies.service';
+import { LocationsService } from '../../core/services/locations.service';
 import { ToastService } from '../../core/services/toast.service';
 import { LocationPicker } from '../../shared/location-picker/location-picker';
 import { LocationValue } from '../../core/models/location.models';
@@ -42,7 +43,7 @@ interface CompanyEditForm {
 
 type ContactModalMode = 'create' | 'edit';
 
-type ContactActiveFilter = 'all' | 'active' | 'inactive';
+type ContactActiveFilter = 'all' | 'active';
 
 interface ContactFormModel {
   id?: string;
@@ -73,6 +74,7 @@ interface ContactFormModel {
 export class CompanyDetail {
   private readonly route = inject(ActivatedRoute);
   private readonly companiesService = inject(CompaniesService);
+  private readonly locationsService = inject(LocationsService);
   private readonly toastService = inject(ToastService);
   private readonly storageService = inject(StorageService);
 
@@ -96,7 +98,7 @@ export class CompanyDetail {
   readonly storageFileCount = signal(0);
   readonly selectedDocument = signal<DocumentTreeNode | null>(null);
   readonly selectedDocumentUrl = signal<string | null>(null);
-  readonly selectedDocumentPreviewType = signal<'image' | 'pdf' | 'other' | null>(null);
+  readonly selectedDocumentPreviewType = signal<'image' | 'other' | null>(null);
 
   private readonly transformer = (
   node: DocumentTreeNode,
@@ -116,22 +118,28 @@ export class CompanyDetail {
     };
   };
 
-  readonly documentTreeControl = new FlatTreeControl<FlatDocumentTreeNode>(
+  readonly documentTreeControl = new FlatTreeControl<FlatDocumentTreeNode, string>(
     (node) => node.level,
     (node) => node.expandable,
+    { trackBy: (node) => node.prefix ?? node.key ?? node.path },
   );
 
-  private readonly documentTreeFlattener = new MatTreeFlattener(
+  private readonly documentTreeFlattener = new MatTreeFlattener<
+    DocumentTreeNode,
+    FlatDocumentTreeNode,
+    string
+  >(
     this.transformer,
     (node) => node.level,
     (node) => node.expandable,
     (node) => node.children ?? [],
   );
 
-  readonly documentTreeDataSource = new MatTreeFlatDataSource(
-    this.documentTreeControl,
-    this.documentTreeFlattener,
-  );
+  readonly documentTreeDataSource = new MatTreeFlatDataSource<
+    DocumentTreeNode,
+    FlatDocumentTreeNode,
+    string
+  >(this.documentTreeControl, this.documentTreeFlattener);
 
   readonly documentPrefix = computed(() => {
     return this.companyId ? `companies/${this.companyId}/` : '';
@@ -297,7 +305,7 @@ export class CompanyDetail {
     return 'description';
   }
 
-  private previewType(key: string): 'image' | 'pdf' | 'other' {
+  private previewType(key: string): 'image' | 'other' {
     const lowerKey = key.toLowerCase();
 
     if (
@@ -307,10 +315,6 @@ export class CompanyDetail {
       lowerKey.endsWith('.webp')
     ) {
       return 'image';
-    }
-
-    if (lowerKey.endsWith('.pdf')) {
-      return 'pdf';
     }
 
     return 'other';
@@ -356,10 +360,7 @@ export class CompanyDetail {
         (contact.email ?? '').toLowerCase().includes(search) ||
         (contact.phone ?? '').toLowerCase().includes(search);
 
-      const matchesActive =
-        activeFilter === 'all' ||
-        (activeFilter === 'active' && active) ||
-        (activeFilter === 'inactive' && !active);
+      const matchesActive = activeFilter === 'all' || active;
 
       return matchesSearch && matchesActive;
     });
@@ -436,18 +437,43 @@ export class CompanyDetail {
           lng: location.lng ?? null,
         },
       })
-      .pipe(finalize(() => this.saving.set(false)))
       .subscribe({
-        next: () => {
-          this.toastService.success('Lokacija je bila posodobljena.');
-          this.pendingLocation.set(null);
-          this.loadCompany();
+        next: (response) => {
+          // The companies endpoint does not persist lat/lng on the linked
+          // location, so push them through the locations endpoint directly.
+          const locationId = (response as { data?: CompanyItem }).data?.location?.id;
+
+          if (locationId && (location.lat != null || location.lng != null)) {
+            this.locationsService
+              .updateLocation(locationId, {
+                lat: location.lat ?? null,
+                lng: location.lng ?? null,
+              })
+              .subscribe({
+                next: () => this.finishLocationSave(),
+                error: (error) => {
+                  console.error(error);
+                  this.finishLocationSave();
+                },
+              });
+            return;
+          }
+
+          this.finishLocationSave();
         },
         error: (error) => {
+          this.saving.set(false);
           console.error(error);
           this.toastService.error(this.extractErrorMessage(error));
         },
       });
+  }
+
+  private finishLocationSave(): void {
+    this.saving.set(false);
+    this.toastService.success('Lokacija je bila posodobljena.');
+    this.pendingLocation.set(null);
+    this.loadCompany();
   }
 
   pendingLocationLabel(): string {

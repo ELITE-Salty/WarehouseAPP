@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, map } from 'rxjs';
 import { ItemsService } from '../../core/services/items.service';
 import { ToastService } from '../../core/services/toast.service';
 import {
@@ -42,12 +42,11 @@ export class Items {
   readonly errorMessage = signal<string | null>(null);
 
   readonly items = signal<ItemListItem[]>([]);
-  readonly options = signal<ItemOptions>({
-    companies: [],
-    units: [],
-    categories: [],
-    warehouseLocations: [],
-  });
+
+  // Separate signals for the list filters and the create/edit modal so that
+  // opening the modal for one company doesn't reload the filter dropdowns.
+  readonly filterOptions = signal<ItemOptions>(this.emptyOptions());
+  readonly modalOptions = signal<ItemOptions>(this.emptyOptions());
 
   readonly searchTerm = signal('');
   readonly companyFilter = signal('');
@@ -90,19 +89,68 @@ export class Items {
   });
 
   constructor() {
-    this.loadOptions();
+    this.loadFilterOptions();
     this.loadItems();
   }
 
-  loadOptions(companyId?: string): void {
-    this.itemsService.getOptions(companyId).subscribe({
-      next: (response) => {
-        const data = 'data' in response ? response.data : response;
-        this.options.set({
+  private fetchOptions(companyId?: string) {
+    return this.itemsService.getOptions(companyId).pipe(
+      map((response): ItemOptions => {
+        const data: any = 'data' in response ? response.data : response;
+
+        return {
           companies: data.companies ?? [],
           units: data.units ?? [],
           categories: data.categories ?? [],
-          warehouseLocations: data.warehouseLocations ?? [],
+          warehouseLocations: data.defaultLocations ?? data.warehouseLocations ?? [],
+        };
+      }),
+    );
+  }
+
+  loadFilterOptions(companyId?: string): void {
+    this.fetchOptions(companyId).subscribe({
+      next: (options) => {
+        this.filterOptions.set(options);
+
+        if (
+          this.categoryFilter() &&
+          !options.categories.some((category) => category.id === this.categoryFilter())
+        ) {
+          this.categoryFilter.set('');
+        }
+      },
+      error: (error) => {
+        console.error(error);
+        this.toastService.error(this.extractErrorMessage(error));
+      },
+    });
+  }
+
+  loadModalOptions(companyId?: string): void {
+    this.fetchOptions(companyId).subscribe({
+      next: (options) => {
+        this.modalOptions.set(options);
+
+        this.form.update((current) => {
+          const categoryValid =
+            !current.categoryId ||
+            options.categories.some((category) => category.id === current.categoryId);
+          const locationValid =
+            !current.defaultLocationId ||
+            options.warehouseLocations.some(
+              (location) => location.id === current.defaultLocationId,
+            );
+
+          if (categoryValid && locationValid) {
+            return current;
+          }
+
+          return {
+            ...current,
+            categoryId: categoryValid ? current.categoryId : '',
+            defaultLocationId: locationValid ? current.defaultLocationId : '',
+          };
         });
       },
       error: (error) => {
@@ -145,7 +193,7 @@ export class Items {
 
   updateCompanyFilter(value: string): void {
     this.companyFilter.set(value);
-    this.loadOptions(value || undefined);
+    this.loadFilterOptions(value || undefined);
   }
 
   updateCategoryFilter(value: string): void {
@@ -161,7 +209,7 @@ export class Items {
     this.companyFilter.set('');
     this.categoryFilter.set('');
     this.activeFilter.set('active');
-    this.loadOptions();
+    this.loadFilterOptions();
     this.loadItems();
   }
 
@@ -170,6 +218,7 @@ export class Items {
     this.form.set(this.emptyForm());
     this.formErrorMessage.set(null);
     this.fieldErrors.set({});
+    this.loadModalOptions();
     this.modalOpen.set(true);
   }
 
@@ -178,9 +227,11 @@ export class Items {
     this.formErrorMessage.set(null);
     this.fieldErrors.set({});
 
+    const companyId = this.itemCompanyId(item);
+
     this.form.set({
       id: item.id,
-      companyId: this.itemCompanyId(item),
+      companyId,
       code: item.code ?? '',
       name: item.name ?? '',
       description: item.description ?? '',
@@ -193,6 +244,7 @@ export class Items {
       active: item.active ?? true,
     });
 
+    this.loadModalOptions(companyId || undefined);
     this.modalOpen.set(true);
   }
 
@@ -218,7 +270,7 @@ export class Items {
     });
 
     if (value.companyId !== undefined) {
-      this.loadOptions(value.companyId || undefined);
+      this.loadModalOptions(value.companyId || undefined);
     }
   }
 
@@ -311,7 +363,7 @@ export class Items {
   locationLabel(locationId: string | null | undefined): string {
     if (!locationId) return '';
 
-    const location = this.options().warehouseLocations.find(
+    const location = this.modalOptions().warehouseLocations.find(
       (item) => item.id === locationId,
     );
 
@@ -386,6 +438,15 @@ export class Items {
     }
 
     return true;
+  }
+
+  private emptyOptions(): ItemOptions {
+    return {
+      companies: [],
+      units: [],
+      categories: [],
+      warehouseLocations: [],
+    };
   }
 
   private emptyForm(): ItemFormModel {

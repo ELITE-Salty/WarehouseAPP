@@ -77,7 +77,7 @@
         >
           <option value="all">Vsa podjetja</option>
 
-          @for (company of companies(); track company.id) {
+          @for (company of effectiveCompanies(); track company.id) {
             <option [value]="company.id">
               {{ company.name }} · {{ company.companyKind }}
             </option>
@@ -238,7 +238,7 @@
                 >
                   <option [ngValue]="null">Izberi podjetje</option>
 
-                  @for (company of companies(); track company.id) {
+                  @for (company of effectiveCompanies(); track company.id) {
                     <option [value]="company.id">
                       {{ company.name }} · {{ company.companyKind }}
                     </option>
@@ -293,7 +293,7 @@
                 >
                   <option [ngValue]="null">Izberi podjetje</option>
 
-                  @for (company of companies(); track company.id) {
+                  @for (company of effectiveCompanies(); track company.id) {
                     <option [value]="company.id">
                       {{ company.name }} · {{ company.companyKind }}
                     </option>

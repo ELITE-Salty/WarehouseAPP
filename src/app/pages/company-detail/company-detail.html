@@ -126,7 +126,6 @@
               (ngModelChange)="updateContactActiveFilter($event)"
             >
               <option value="active">Samo aktivni</option>
-              <option value="inactive">Samo neaktivni</option>
               <option value="all">Vsi kontakti</option>
             </select>
           </label>
@@ -401,8 +400,6 @@
               <div class="preview-box">
                 @if (selectedDocumentPreviewType() === 'image') {
                   <img [src]="selectedDocumentUrl()" alt="Predogled dokumenta" />
-                } @else if (selectedDocumentPreviewType() === 'pdf') {
-                  <iframe [src]="selectedDocumentUrl()" title="PDF predogled"></iframe>
                 } @else {
                   <div class="no-preview">
                     <mat-icon>description</mat-icon>

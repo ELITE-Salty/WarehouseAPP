@@ -110,6 +110,31 @@ export class ReferenceData {
     });
   });
 
+  readonly effectiveCompanies = computed(() => {
+    const byId = new Map<string, ReferenceCompanyOption>();
+
+    for (const company of this.companies()) {
+      byId.set(company.id, company);
+    }
+
+    // The options endpoint can under-report companies for
+    // warehouse/global users, so also fall back to the company embedded
+    // on each unit/category, which the backend fills in correctly.
+    for (const unit of this.units()) {
+      if (unit.company && !byId.has(unit.company.id)) {
+        byId.set(unit.company.id, unit.company);
+      }
+    }
+
+    for (const category of this.categories()) {
+      if (category.company && !byId.has(category.company.id)) {
+        byId.set(category.company.id, category.company);
+      }
+    }
+
+    return [...byId.values()];
+  });
+
   readonly modalTitle = computed(() => {
     if (this.modalEntity() === 'unit') {
       return this.modalMode() === 'create' ? 'Dodaj enoto' : 'Uredi enoto';
@@ -441,7 +466,8 @@ export class ReferenceData {
     }
 
     return (
-      this.companies().find((company) => company.id === companyId)?.name ?? '-'
+      this.effectiveCompanies().find((company) => company.id === companyId)
+        ?.name ?? '-'
     );
   }
 
@@ -496,7 +522,7 @@ export class ReferenceData {
   }
 
   private defaultCompanyId(): string | null {
-    return this.companies()[0]?.id ?? null;
+    return this.effectiveCompanies()[0]?.id ?? null;
   }
 
   private clearMessages(): void {

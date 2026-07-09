@@ -30,7 +30,7 @@
       >
         <option value="">Vsa podjetja</option>
 
-        @for (company of options().companies; track company.id) {
+        @for (company of filterOptions().companies; track company.id) {
           <option [value]="company.id">{{ company.name }}</option>
         }
       </select>
@@ -44,7 +44,7 @@
       >
         <option value="">Vse kategorije</option>
 
-        @for (category of options().categories; track category.id) {
+        @for (category of filterOptions().categories; track category.id) {
           <option [value]="category.id">{{ category.name }}</option>
         }
       </select>
@@ -181,7 +181,7 @@
           >
             <option value="">Izberi podjetje</option>
 
-            @for (company of options().companies; track company.id) {
+            @for (company of modalOptions().companies; track company.id) {
               <option [value]="company.id">{{ company.name }}</option>
             }
           </select>
@@ -228,7 +228,7 @@
           >
             <option value="">Izberi enoto</option>
 
-            @for (unit of options().units; track unit.id) {
+            @for (unit of modalOptions().units; track unit.id) {
               <option [value]="unit.id">
                 {{ unit.name }} @if (unit.abbreviation) { ({{ unit.abbreviation }}) }
               </option>
@@ -249,7 +249,7 @@
           >
             <option value="">Brez kategorije</option>
 
-            @for (category of options().categories; track category.id) {
+            @for (category of modalOptions().categories; track category.id) {
               <option [value]="category.id">{{ category.name }}</option>
             }
           </select>
@@ -264,7 +264,7 @@
           >
             <option value="">Brez privzete lokacije</option>
 
-            @for (location of options().warehouseLocations; track location.id) {
+            @for (location of modalOptions().warehouseLocations; track location.id) {
               <option [value]="location.id">
                 {{ locationLabel(location.id) }}
               </option>

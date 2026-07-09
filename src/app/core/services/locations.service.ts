@@ -70,4 +70,13 @@ export class LocationsService {
       payload,
     );
   }
+
+  updateLocation(
+    id: string,
+    payload: { lat?: number | null; lng?: number | null },
+  ) {
+    return this.http.patch<
+      ApiSuccessResponse<LocationValue> | ApiDataResponse<LocationValue>
+    >(`${this.baseUrl}/${id}`, payload);
+  }
 }
