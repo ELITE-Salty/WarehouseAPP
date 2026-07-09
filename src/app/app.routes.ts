@@ -13,6 +13,7 @@ import { WarehouseLocations } from './pages/warehouse-locations/warehouse-locati
 import { UsersComponent } from './pages/users/users';
 import { ReferenceData } from './pages/reference-data/reference-data';
 import { Documents } from './pages/documents/documents';
+import { ItemDetail } from './pages/item-detail/item-detail';
 import { Billing } from './pages/billing/billing';
 
 export const routes: Routes = [
@@ -45,6 +46,11 @@ export const routes: Routes = [
         path: 'stock',
         component: Stock,
         title: 'Stock | Warehouse PWA',
+      },
+      { 
+        path: 'items/:id', 
+        component: ItemDetail, 
+        title: 'Item | Warehouse PWA' 
       },
       {
         path: 'items',

@@ -1,1 +1,341 @@
-<p>items works!</p>
+<section class="items-page">
+  <header class="page-header">
+    <div>
+      <p>Artikli</p>
+      <h1>Artikli</h1>
+      <span>Upravljanje artiklov, slik, šifer in nizke zaloge.</span>
+    </div>
+
+    <button class="primary-button" type="button" (click)="openCreateModal()">
+      Dodaj artikel
+    </button>
+  </header>
+
+  <section class="filters-card">
+    <label>
+      <span>Iskanje</span>
+      <input
+        type="search"
+        placeholder="Šifra, naziv ali opis ..."
+        [ngModel]="searchTerm()"
+        (ngModelChange)="updateSearch($event)"
+      />
+    </label>
+
+    <label>
+      <span>Podjetje</span>
+      <select
+        [ngModel]="companyFilter()"
+        (ngModelChange)="updateCompanyFilter($event)"
+      >
+        <option value="">Vsa podjetja</option>
+
+        @for (company of options().companies; track company.id) {
+          <option [value]="company.id">{{ company.name }}</option>
+        }
+      </select>
+    </label>
+
+    <label>
+      <span>Kategorija</span>
+      <select
+        [ngModel]="categoryFilter()"
+        (ngModelChange)="updateCategoryFilter($event)"
+      >
+        <option value="">Vse kategorije</option>
+
+        @for (category of options().categories; track category.id) {
+          <option [value]="category.id">{{ category.name }}</option>
+        }
+      </select>
+    </label>
+
+    <label>
+      <span>Status</span>
+      <select
+        [ngModel]="activeFilter()"
+        (ngModelChange)="updateActiveFilter($event)"
+      >
+        <option value="active">Aktivni</option>
+        <option value="inactive">Neaktivni</option>
+        <option value="all">Vsi</option>
+      </select>
+    </label>
+
+    <div class="filter-actions">
+      <button class="secondary-button" type="button" (click)="loadItems()">
+        Filtriraj
+      </button>
+
+      <button class="ghost-button" type="button" (click)="clearFilters()">
+        Počisti
+      </button>
+    </div>
+  </section>
+
+  @if (errorMessage()) {
+    <div class="error-card">{{ errorMessage() }}</div>
+  }
+
+  <section class="table-card">
+    <div class="table-header">
+      <strong>{{ filteredItems().length }} artiklov</strong>
+
+      @if (loading()) {
+        <span>Nalaganje ...</span>
+      }
+    </div>
+
+    <div class="items-table">
+      <div class="table-row table-head">
+        <span>Šifra</span>
+        <span>Naziv</span>
+        <span>Podjetje</span>
+        <span>Kategorija</span>
+        <span>Enota</span>
+        <span>Nizka zaloga</span>
+        <span>Status</span>
+        <span></span>
+      </div>
+
+      @for (item of filteredItems(); track item.id) {
+        <div class="table-row">
+          <span>
+            <strong>{{ item.code }}</strong>
+          </span>
+
+          <span>
+            <a [routerLink]="['/app/items', item.id]">{{ item.name }}</a>
+            @if (item.description) {
+              <small>{{ item.description }}</small>
+            }
+          </span>
+
+          <span>{{ companyName(item) }}</span>
+          <span>{{ categoryName(item) }}</span>
+          <span>{{ unitLabel(item) }}</span>
+
+          <span>
+            {{ itemLowStockQuantity(item) ?? '-' }}
+            @if (itemLowStockPalletQuantity(item) !== null) {
+              <small>{{ itemLowStockPalletQuantity(item) }} palet</small>
+            }
+          </span>
+
+          <span>
+            @if (item.active ?? true) {
+              <span class="status-pill active">Aktiven</span>
+            } @else {
+              <span class="status-pill inactive">Neaktiven</span>
+            }
+          </span>
+
+          <span class="row-actions">
+            <a class="secondary-button small" [routerLink]="['/app/items', item.id]">
+              Odpri
+            </a>
+
+            <button type="button" (click)="openEditModal(item)">
+              Uredi
+            </button>
+
+            <button type="button" (click)="toggleItemActive(item)">
+              @if (item.active ?? true) {
+                Deaktiviraj
+              } @else {
+                Aktiviraj
+              }
+            </button>
+          </span>
+        </div>
+      } @empty {
+        <div class="empty-state">Ni artiklov za prikaz.</div>
+      }
+    </div>
+  </section>
+</section>
+
+@if (modalOpen()) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <section class="modal-card" (click)="$event.stopPropagation()">
+      <header class="modal-header">
+        <div>
+          <p>Artikli</p>
+          <h2>{{ modalTitle() }}</h2>
+        </div>
+
+        <button type="button" (click)="closeModal()">×</button>
+      </header>
+
+      <form class="item-form" (ngSubmit)="saveItem()">
+        @if (formErrorMessage()) {
+          <div class="modal-alert">{{ formErrorMessage() }}</div>
+        }
+
+        <label [class.invalid-field]="fieldError('companyId')">
+          <span>Podjetje *</span>
+          <select
+            name="companyId"
+            [ngModel]="form().companyId"
+            (ngModelChange)="patchForm({ companyId: $event })"
+          >
+            <option value="">Izberi podjetje</option>
+
+            @for (company of options().companies; track company.id) {
+              <option [value]="company.id">{{ company.name }}</option>
+            }
+          </select>
+
+          @if (fieldError('companyId')) {
+            <small>{{ fieldError('companyId') }}</small>
+          }
+        </label>
+
+        <label [class.invalid-field]="fieldError('code')">
+          <span>Šifra *</span>
+          <input
+            type="text"
+            name="code"
+            [ngModel]="form().code"
+            (ngModelChange)="patchForm({ code: $event })"
+          />
+
+          @if (fieldError('code')) {
+            <small>{{ fieldError('code') }}</small>
+          }
+        </label>
+
+        <label [class.invalid-field]="fieldError('name')">
+          <span>Naziv *</span>
+          <input
+            type="text"
+            name="name"
+            [ngModel]="form().name"
+            (ngModelChange)="patchForm({ name: $event })"
+          />
+
+          @if (fieldError('name')) {
+            <small>{{ fieldError('name') }}</small>
+          }
+        </label>
+
+        <label [class.invalid-field]="fieldError('unitId')">
+          <span>Enota *</span>
+          <select
+            name="unitId"
+            [ngModel]="form().unitId"
+            (ngModelChange)="patchForm({ unitId: $event })"
+          >
+            <option value="">Izberi enoto</option>
+
+            @for (unit of options().units; track unit.id) {
+              <option [value]="unit.id">
+                {{ unit.name }} @if (unit.abbreviation) { ({{ unit.abbreviation }}) }
+              </option>
+            }
+          </select>
+
+          @if (fieldError('unitId')) {
+            <small>{{ fieldError('unitId') }}</small>
+          }
+        </label>
+
+        <label>
+          <span>Kategorija</span>
+          <select
+            name="categoryId"
+            [ngModel]="form().categoryId"
+            (ngModelChange)="patchForm({ categoryId: $event })"
+          >
+            <option value="">Brez kategorije</option>
+
+            @for (category of options().categories; track category.id) {
+              <option [value]="category.id">{{ category.name }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          <span>Privzeta skladiščna lokacija</span>
+          <select
+            name="defaultLocationId"
+            [ngModel]="form().defaultLocationId"
+            (ngModelChange)="patchForm({ defaultLocationId: $event })"
+          >
+            <option value="">Brez privzete lokacije</option>
+
+            @for (location of options().warehouseLocations; track location.id) {
+              <option [value]="location.id">
+                {{ locationLabel(location.id) }}
+              </option>
+            }
+          </select>
+        </label>
+
+        <label [class.invalid-field]="fieldError('lowStockQuantity')">
+          <span>Nizka zaloga</span>
+          <input
+            type="number"
+            min="0"
+            name="lowStockQuantity"
+            [ngModel]="form().lowStockQuantity"
+            (ngModelChange)="patchForm({ lowStockQuantity: $event })"
+          />
+
+          @if (fieldError('lowStockQuantity')) {
+            <small>{{ fieldError('lowStockQuantity') }}</small>
+          }
+        </label>
+
+        <label [class.invalid-field]="fieldError('lowStockPalletQuantity')">
+          <span>Nizka zaloga palet</span>
+          <input
+            type="number"
+            min="0"
+            name="lowStockPalletQuantity"
+            [ngModel]="form().lowStockPalletQuantity"
+            (ngModelChange)="patchForm({ lowStockPalletQuantity: $event })"
+          />
+
+          @if (fieldError('lowStockPalletQuantity')) {
+            <small>{{ fieldError('lowStockPalletQuantity') }}</small>
+          }
+        </label>
+
+        <label class="full-width">
+          <span>Opis</span>
+          <textarea
+            name="description"
+            rows="4"
+            [ngModel]="form().description"
+            (ngModelChange)="patchForm({ description: $event })"
+          ></textarea>
+        </label>
+
+        <label class="checkbox-label full-width">
+          <input
+            type="checkbox"
+            name="active"
+            [ngModel]="form().active"
+            (ngModelChange)="patchForm({ active: $event })"
+          />
+          <span>Artikel je aktiven</span>
+        </label>
+
+        <footer class="modal-actions">
+          <button class="secondary-button" type="button" (click)="closeModal()">
+            Prekliči
+          </button>
+
+          <button class="primary-button" type="submit" [disabled]="saving()">
+            @if (saving()) {
+              Shranjevanje ...
+            } @else {
+              Shrani artikel
+            }
+          </button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}
