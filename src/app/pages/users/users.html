@@ -35,10 +35,7 @@
 
       <label>
         <span>Vloga</span>
-        <select
-          [ngModel]="roleFilter()"
-          (ngModelChange)="updateRoleFilter($event)"
-        >
+        <select [ngModel]="roleFilter()" (ngModelChange)="updateRoleFilter($event)">
           <option value="all">Vse vloge</option>
 
           @for (role of roles(); track role.code) {
@@ -49,26 +46,18 @@
 
       <label>
         <span>Podjetje</span>
-        <select
-          [ngModel]="companyFilter()"
-          (ngModelChange)="updateCompanyFilter($event)"
-        >
+        <select [ngModel]="companyFilter()" (ngModelChange)="updateCompanyFilter($event)">
           <option value="all">Vsa podjetja</option>
 
           @for (company of companies(); track company.id) {
-            <option [value]="company.id">
-              {{ company.name }} · {{ company.companyKind }}
-            </option>
+            <option [value]="company.id">{{ company.name }} · {{ company.companyKind }}</option>
           }
         </select>
       </label>
 
       <label>
         <span>Status</span>
-        <select
-          [ngModel]="activeFilter()"
-          (ngModelChange)="updateActiveFilter($event)"
-        >
+        <select [ngModel]="activeFilter()" (ngModelChange)="updateActiveFilter($event)">
           <option value="all">Vsi statusi</option>
           <option value="active">Aktivni</option>
           <option value="inactive">Neaktivni</option>
@@ -90,8 +79,7 @@
         <span>Nalaganje ...</span>
       } @else {
         <span>
-          Prikaz {{ showingFrom() }}–{{ showingTo() }} od
-          {{ filteredUsers().length }} uporabnikov
+          Prikaz {{ showingFrom() }}–{{ showingTo() }} od {{ filteredUsers().length }} uporabnikov
         </span>
       }
     </div>
@@ -136,47 +124,32 @@
           </div>
 
           <div class="row-actions">
-            <button type="button" (click)="openEditModal(user)">
-              Uredi
-            </button>
+            <button type="button" (click)="openEditModal(user)">Uredi</button>
 
             @if (user.active) {
-              <button type="button" (click)="setActive(user, false)">
-                Deaktiviraj
-              </button>
+              <button type="button" (click)="setActive(user, false)">Deaktiviraj</button>
             } @else {
-              <button type="button" (click)="setActive(user, true)">
-                Aktiviraj
-              </button>
+              <button type="button" (click)="setActive(user, true)">Aktiviraj</button>
             }
 
             @if (!user.emailConfirmed) {
-              <button type="button" (click)="resendVerification(user)">
-                Verifikacija
-              </button>
+              <button type="button" (click)="resendVerification(user)">Verifikacija</button>
             }
 
-            <button class="danger-button" type="button" (click)="deleteUser(user)">
-              Izbriši
-            </button>
+            <button class="danger-button" type="button" (click)="deleteUser(user)">Izbriši</button>
           </div>
         </div>
       }
 
       @if (!loading() && pagedUsers().length === 0) {
-        <div class="empty-state">
-          Ni uporabnikov za prikaz.
-        </div>
+        <div class="empty-state">Ni uporabnikov za prikaz.</div>
       }
     </div>
 
     <div class="pagination">
       <div>
         <span>Na stran:</span>
-        <select
-          [ngModel]="pageSize()"
-          (ngModelChange)="updatePageSize($event)"
-        >
+        <select [ngModel]="pageSize()" (ngModelChange)="updatePageSize($event)">
           <option [value]="5">5</option>
           <option [value]="10">10</option>
           <option [value]="20">20</option>
@@ -185,17 +158,11 @@
       </div>
 
       <div class="page-buttons">
-        <button type="button" (click)="previousPage()" [disabled]="page() <= 1">
-          Prejšnja
-        </button>
+        <button type="button" (click)="previousPage()" [disabled]="page() <= 1">Prejšnja</button>
 
         <strong>Stran {{ page() }} / {{ totalPages() }}</strong>
 
-        <button
-          type="button"
-          (click)="nextPage()"
-          [disabled]="page() >= totalPages()"
-        >
+        <button type="button" (click)="nextPage()" [disabled]="page() >= totalPages()">
           Naslednja
         </button>
       </div>
@@ -370,9 +337,7 @@
           }
 
           <footer class="modal-actions">
-            <button type="button" class="secondary-button" (click)="closeModal()">
-              Prekliči
-            </button>
+            <button type="button" class="secondary-button" (click)="closeModal()">Prekliči</button>
 
             <button class="primary-button" type="submit" [disabled]="saving()">
               @if (saving()) {
