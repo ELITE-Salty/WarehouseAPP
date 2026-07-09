@@ -88,7 +88,7 @@ export class Companies {
       const active = company.active ?? true;
 
       const locationText = company.location
-        ? `${company.location.street ?? ''} ${company.location.postCode ?? ''} ${company.location.city ?? ''} ${company.location.country ?? ''}`
+        ? `${company.location.street ?? ''} ${this.locationPostCode(company.location)} ${company.location.city ?? ''} ${company.location.country ?? ''}`
         : '';
 
       const matchesSearch =
@@ -202,7 +202,7 @@ export class Companies {
   }
 
   updatePageSize(value: string | number): void {
-    this.pageSize.set(Number(value));
+    this.pageSize.set(value === 'all' ? 'all' : (Number(value) as PageSize));
     this.page.set(1);
   }
 
@@ -325,8 +325,13 @@ export class Companies {
   }
 
   safeCompanyKind(company: CompanyItem): CompanyKind {
-    return company.companyKind ?? 'OTHER';
+    return company.companyKind ?? company.company_kind ?? 'OTHER';
   }
+
+  locationPostCode(location: { postCode?: string; post_code?: string } | null | undefined): string {
+    return location?.postCode ?? location?.post_code ?? '';
+  }
+
 
   companyKindClass(company: CompanyItem): string {
     return `kind-${this.safeCompanyKind(company).toLowerCase()}`;
@@ -351,7 +356,7 @@ export class Companies {
 
     return [
       company.location.street,
-      company.location.postCode,
+      this.locationPostCode(company.location),
       company.location.city,
       company.location.country,
     ]

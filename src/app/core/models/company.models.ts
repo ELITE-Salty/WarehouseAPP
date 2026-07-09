@@ -5,17 +5,6 @@ export type CompanyKind =
   | 'CARRIER'
   | 'OTHER';
 
-export interface LocationModel {
-  id?: string;
-  name?: string | null;
-  street: string;
-  postCode: string;
-  city: string;
-  country: string;
-  lat?: number | null;
-  lng?: number | null;
-}
-
 export interface CompanyContact {
   id: string;
   name: string;
@@ -26,6 +15,21 @@ export interface CompanyContact {
   receivesDocumentEmails: boolean;
   receivesLowStockAlerts: boolean;
   active: boolean;
+}
+
+export interface LocationModel {
+  id?: string;
+  name?: string | null;
+
+  street: string;
+
+  postCode?: string;
+  post_code?: string;
+
+  city: string;
+  country: string;
+  lat?: number | null;
+  lng?: number | null;
 }
 
 export interface CompanyItem {
@@ -52,6 +56,7 @@ export interface CompanyItem {
 
   iban?: string | null;
   bic?: string | null;
+
   bankName?: string | null;
   bank_name?: string | null;
 
